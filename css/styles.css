@@ -96,19 +96,8 @@ ul {
   gap: 0.75rem;
 }
 
-.brand-mark {
-  display: grid;
-  place-items: center;
-  width: 48px;
-  height: 48px;
+.brand-logo {
   border-radius: 50%;
-  background: var(--yellow);
-  color: var(--blue-deep);
-  font-size: 0.62rem;
-  font-weight: 900;
-  letter-spacing: 0.04em;
-  line-height: 1.05;
-  text-align: center;
   flex-shrink: 0;
 }
 
@@ -194,8 +183,8 @@ ul {
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-columns: 1fr 1.05fr;
-  align-items: end;
+  grid-template-columns: 1.05fr 1fr;
+  align-items: center;
   gap: 2rem;
   min-height: calc(100vh - var(--header-h) - 72px);
   padding-block: 2rem 0;
@@ -204,7 +193,19 @@ ul {
 .hero-visual {
   display: flex;
   justify-content: center;
-  align-items: flex-end;
+  align-items: center;
+}
+
+@media (min-width: 961px) {
+  .hero-grid {
+    grid-template-columns: 1fr 1.05fr;
+    align-items: end;
+  }
+
+  .hero-visual {
+    order: -1;
+    align-items: flex-end;
+  }
 }
 
 .hero-photo {
@@ -818,21 +819,58 @@ a.contact-card:hover {
 
 /* Responsive */
 @media (max-width: 960px) {
-  .hero-grid,
+  .hero-grid {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+    min-height: auto;
+    gap: 1.5rem;
+  }
+
+  .hero-copy {
+    padding-block: 1rem 0.5rem;
+    text-align: center;
+  }
+
+  .hero-logo {
+    margin-inline: auto;
+  }
+
+  .hero-actions {
+    justify-content: center;
+  }
+
+  .hero-actions .btn {
+    flex: 1 1 calc(50% - 0.5rem);
+    min-width: 140px;
+  }
+
+  .hero-visual {
+    order: 2;
+  }
+
+  .hero-photo {
+    width: min(100%, 280px);
+    margin-inline: auto;
+  }
+
+  .hero-slogan .container {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.35rem;
+    padding-block: 1rem;
+  }
+
+  .hero-term {
+    font-size: 0.82rem;
+    line-height: 1.4;
+  }
+
   .about-grid,
   .message-grid,
   .contact-grid,
   .feedback-grid,
   .commitment-block {
     grid-template-columns: 1fr;
-  }
-
-  .hero-visual {
-    order: -1;
-  }
-
-  .hero-photo {
-    width: min(100%, 340px);
   }
 
   .pillars-grid {
@@ -846,11 +884,83 @@ a.contact-card:hover {
   .form-row-split {
     grid-template-columns: 1fr;
   }
+
+  .message-grid .message-media {
+    order: 2;
+  }
+
+  .about-grid .about-media {
+    order: 2;
+  }
 }
 
 @media (max-width: 720px) {
+  :root {
+    --header-h: 68px;
+  }
+
   .nav-toggle {
     display: block;
+  }
+
+  .brand-text small {
+    display: none;
+  }
+
+  .brand-text strong {
+    font-size: 0.92rem;
+  }
+
+  .brand-logo {
+    width: 40px;
+    height: 40px;
+  }
+
+  .title-main,
+  .title-outline {
+    font-size: clamp(2.8rem, 14vw, 4rem);
+  }
+
+  .hero-lead {
+    font-size: 0.98rem;
+  }
+
+  .hero-actions {
+    flex-direction: column;
+  }
+
+  .hero-actions .btn {
+    width: 100%;
+  }
+
+  .section-head h2,
+  .about-copy h2,
+  .contact-copy h2,
+  .feedback-copy h2,
+  .message-copy h2 {
+    font-size: clamp(1.65rem, 7vw, 2.2rem);
+  }
+
+  .pillar-card {
+    min-height: auto;
+    padding: 1.15rem 1rem;
+  }
+
+  .commitment-block {
+    gap: 1.25rem;
+  }
+
+  .commitment-photo img {
+    max-width: 220px;
+    margin-inline: auto;
+  }
+
+  .manifesto-commitment {
+    padding: 1.25rem 1.35rem;
+  }
+
+  .feedback-form {
+    padding: 1.25rem;
   }
 
   .site-nav {
