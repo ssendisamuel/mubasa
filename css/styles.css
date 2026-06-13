@@ -325,6 +325,60 @@ ul {
   background: rgba(255, 255, 255, 0.08);
 }
 
+.btn-soon {
+  opacity: 0.72;
+  cursor: not-allowed;
+  border-style: dashed;
+}
+
+.btn-soon:hover {
+  transform: none;
+  background: transparent;
+}
+
+.notice-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.notice-modal[hidden] {
+  display: none;
+}
+
+.notice-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 8, 20, 0.72);
+}
+
+.notice-modal-panel {
+  position: relative;
+  width: min(420px, 100%);
+  padding: 1.75rem;
+  border-radius: var(--radius);
+  background: var(--blue-deep);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: var(--shadow);
+}
+
+.notice-modal-panel h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.5rem;
+}
+
+.notice-modal-panel p {
+  margin: 0 0 1.25rem;
+  color: var(--text-muted);
+}
+
+body.modal-open {
+  overflow: hidden;
+}
+
 .hero-slogan {
   position: relative;
   z-index: 1;

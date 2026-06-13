@@ -60,7 +60,7 @@
           </p>
           <div class="hero-actions">
             <a class="btn btn-primary" href="#manifesto">Read the Manifesto</a>
-            <a class="btn btn-ghost" href="assets/manifesto.pdf" target="_blank" rel="noopener">Download PDF</a>
+            <button type="button" class="btn btn-ghost btn-soon" id="download-pdf-btn" aria-disabled="true">Download PDF</button>
           </div>
         </div>
         <div class="hero-visual">
@@ -391,6 +391,16 @@
       <p class="footer-copy">&copy; 2026 Ssendi Samuel Campaign · Enabling the Future</p>
     </div>
   </footer>
+
+  <div class="notice-modal" id="pdf-notice" hidden role="dialog" aria-modal="true" aria-labelledby="pdf-notice-title">
+    <div class="notice-modal-backdrop" data-close-notice></div>
+    <div class="notice-modal-panel">
+      <p class="eyebrow">Coming soon</p>
+      <h2 id="pdf-notice-title">Manifesto PDF</h2>
+      <p>The full manifesto PDF will be available for download here soon. You can read the complete manifesto on this page in the meantime.</p>
+      <button type="button" class="btn btn-primary" data-close-notice>Got it</button>
+    </div>
+  </div>
 
   <script src="js/main.js"></script>
 </body>
