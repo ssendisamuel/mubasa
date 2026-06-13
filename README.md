@@ -1,92 +1,77 @@
-# MUBASA Campaign Site
+# MUBASA Campaign Site — Ssendi Samuel for Deputy Chairperson
 
-Campaign website for **Ssendi Samuel MUBASA** — Deputy Chairperson, Makerere University Business School (MUBS), 2026–2028.
+Campaign website for **Ssendi Samuel**, candidate for **Deputy Chairperson** of the Makerere University Business School Academic Staff Association (MUBASA), 2026–2028.
 
 **Live URL:** [https://mubasa.ssendi.dev/](https://mubasa.ssendi.dev/)
 
-## Stack
+## Tech stack
 
-Static HTML, CSS, and JavaScript — no build step required. Designed for fast deployment on CWP/Afriezon shared hosting.
+| Layer | Technology |
+|-------|------------|
+| Frontend | **HTML5**, **CSS3**, **JavaScript** (vanilla — no React, no build step) |
+| Feedback API | **PHP** + **MySQL** (runs on your CWP/Afriezon VPS) |
+| Hosting | Static files + PHP on Apache/CWP |
 
-## Local preview
+No npm, no frameworks — easy to deploy and maintain on shared hosting.
+
+## View locally
 
 ```bash
-cd mubasa
+cd /Users/samuel/Development/Projects/mubasa
 python3 -m http.server 8080
-# Open http://localhost:8080
 ```
 
-## Deploy to VPS (CWP)
+Open **http://localhost:8080** in your browser.
 
-### 1. Push this repo to GitHub/GitLab
+> The feedback form needs PHP on the server. Locally you can browse the full site; form submissions work after deploy once `api/config.php` is set up.
+
+For local PHP testing:
 
 ```bash
-git remote add origin git@github.com:YOUR_USER/mubasa.git
-git push -u origin main
+php -S localhost:8080
 ```
 
-### 2. On the server — first-time setup
+## Member feedback form
+
+The **Your Voice** section lets MUBASA members share what they expect from the manifesto. Submissions are stored in MySQL and optionally emailed to you.
+
+### Server setup (one time)
+
+1. Copy `api/config.example.php` → `api/config.php`
+2. Fill in your CWP MySQL credentials (database `ssendi_mubasa`)
+3. Deploy the site — the PHP script creates the `feedback` table automatically
+
+View submissions in phpMyAdmin: `SELECT * FROM feedback ORDER BY created_at DESC;`
+
+## Deploy to VPS
 
 ```bash
-ssh ssendi@YOUR_SERVER
-
-# Clone the repo (outside public_html)
+# On server — first time
 mkdir -p ~/repos && cd ~/repos
-git clone git@github.com:YOUR_USER/mubasa.git
+git clone git@github.com:ssendisamuel/mubasa.git
 cd mubasa
+cp api/config.example.php api/config.php   # edit with DB password
 chmod +x scripts/deploy.sh
-
-# Deploy to public_html (or subdomain docroot)
-REPO_DIR=$HOME/repos/mubasa DEPLOY_DIR=$HOME/public_html ./scripts/deploy.sh
+./scripts/deploy.sh
 ```
 
-If `mubasa.ssendi.dev` uses a separate docroot, set `DEPLOY_DIR` accordingly, e.g.:
-
-```bash
-DEPLOY_DIR=$HOME/public_html/mubasa.ssendi.dev ./scripts/deploy.sh
-```
-
-### 3. Subsequent deploys
+Subsequent updates:
 
 ```bash
 cd ~/repos/mubasa && ./scripts/deploy.sh
 ```
 
-Optional cron (every hour):
+## Brand colors (campaign flyer)
 
-```cron
-0 * * * * REPO_DIR=/home/ssendi/repos/mubasa DEPLOY_DIR=/home/ssendi/public_html /home/ssendi/repos/mubasa/scripts/deploy.sh >> /home/ssendi/logs/mubasa-deploy.log 2>&1
-```
-
-## Project structure
-
-```
-mubasa/
-├── index.html          # Single-page campaign site
-├── css/styles.css      # Flyer color theme
-├── js/main.js          # Mobile nav + scroll effects
-├── assets/images/      # Photos, logo, flyer
-└── scripts/deploy.sh   # VPS pull + rsync deploy
-```
-
-## Brand colors (from campaign flyer)
-
-| Pillar          | Color   | Hex       |
-|-----------------|---------|-----------|
-| Unity           | Yellow  | `#FFCC00` |
-| Welfare         | Orange  | `#FF8C00` |
-| Growth          | Coral   | `#FF4500` |
-| Sustainability  | Red     | `#E31B23` |
-| Background      | Blue    | `#003399` / `#001A57` |
-
-## Updating manifesto content
-
-Manifesto sections are in `index.html` under `#manifesto`. To sync from the full Word document:
-
-1. Add `Ssendi Samuel MUBASA Manifesto Final Version.docx` to the repo root.
-2. Update the manifesto `<ul>` items in `index.html` to match.
-3. Optionally export a PDF to `assets/manifesto.pdf` and link it from the hero CTA.
+| Pillar | Hex |
+|--------|-----|
+| Unity | `#FFCC00` |
+| Welfare | `#FF8C00` |
+| Growth | `#FF4500` |
+| Sustainability | `#E31B23` |
+| Background | `#003399` / `#001A57` |
 
 ## Contact
 
-Update the email in `index.html` (`#contact`) with your preferred campaign address.
+- **Email:** sssendi@mubs.ac.ug
+- **Phone:** 0779 265 701

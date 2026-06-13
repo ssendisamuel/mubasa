@@ -8,9 +8,10 @@ Thumbs.db
 .vscode/
 *.swp
 
-# Local env
+# Local env / secrets
 .env
 .env.*
+api/config.php
 
 # Optional large originals (aliases are committed)
 assets/images/IMG_*
@@ -18,3 +19,4 @@ assets/images/image-*
 assets/images/new-compressed*
 assets/images/Screenshot_*
 assets/images/Straigh_no_background-*
+assets/images/flyer.png
