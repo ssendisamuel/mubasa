@@ -1,0 +1,20 @@
+# Dependencies
+.DS_Store
+Thumbs.db
+*.log
+
+# Editor
+.idea/
+.vscode/
+*.swp
+
+# Local env
+.env
+.env.*
+
+# Optional large originals (aliases are committed)
+assets/images/IMG_*
+assets/images/image-*
+assets/images/new-compressed*
+assets/images/Screenshot_*
+assets/images/Straigh_no_background-*
