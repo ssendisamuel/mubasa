@@ -493,6 +493,34 @@ ul {
   color: var(--yellow);
 }
 
+.manifesto-subhead {
+  margin: 1.25rem 0 0.5rem;
+  font-size: 0.88rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--yellow);
+}
+
+.manifesto-commitment {
+  margin: 2.5rem 0 0;
+  padding: 1.75rem 2rem;
+  border-left: 4px solid var(--yellow);
+  background: rgba(0, 0, 0, 0.18);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+.manifesto-commitment p {
+  margin: 0 0 1rem;
+  font-size: 1.05rem;
+  line-height: 1.7;
+}
+
+.manifesto-commitment footer {
+  font-weight: 700;
+  color: var(--yellow);
+}
+
 .manifesto-item[data-pillar="unity"] .manifesto-tag { background: var(--yellow); color: var(--blue-deep); }
 .manifesto-item[data-pillar="welfare"] .manifesto-tag { background: var(--orange); }
 .manifesto-item[data-pillar="growth"] .manifesto-tag { background: var(--coral); }
