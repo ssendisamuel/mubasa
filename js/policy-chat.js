@@ -78,30 +78,74 @@
 
     function formatMessage(text) {
       const escaped = escapeHtml(String(text)).replace(/\r\n/g, "\n");
-      const blocks = escaped.split(/\n\n+/);
+      const lines = escaped.split("\n");
+      const parts = [];
+      let index = 0;
 
-      return blocks
-        .map((block) => {
-          const lines = block.split("\n").filter((line) => line.trim() !== "");
-          if (lines.length === 0) return "";
+      while (index < lines.length) {
+        const trimmed = lines[index].trim();
 
-          const isBulletList = lines.every((line) => /^\s*-\s+/.test(line));
-          if (isBulletList) {
-            const items = lines
-              .map((line) => line.replace(/^\s*-\s+/, ""))
-              .map((line) => `<li>${formatInline(line)}</li>`)
-              .join("");
-            return `<ul>${items}</ul>`;
+        if (!trimmed) {
+          index += 1;
+          continue;
+        }
+
+        if (/^###\s+/.test(trimmed)) {
+          parts.push(`<h4 class="chat-heading chat-heading-sm">${formatInline(trimmed.replace(/^###\s+/, ""))}</h4>`);
+          index += 1;
+          continue;
+        }
+
+        if (/^##\s+/.test(trimmed)) {
+          parts.push(`<h3 class="chat-heading">${formatInline(trimmed.replace(/^##\s+/, ""))}</h3>`);
+          index += 1;
+          continue;
+        }
+
+        if (/^#\s+/.test(trimmed)) {
+          parts.push(`<h2 class="chat-heading chat-heading-lg">${formatInline(trimmed.replace(/^#\s+/, ""))}</h2>`);
+          index += 1;
+          continue;
+        }
+
+        if (/^[-*]\s+/.test(trimmed)) {
+          const items = [];
+          while (index < lines.length && /^[-*]\s+/.test(lines[index].trim())) {
+            items.push(`<li>${formatInline(lines[index].trim().replace(/^[-*]\s+/, ""))}</li>`);
+            index += 1;
           }
+          parts.push(`<ul>${items.join("")}</ul>`);
+          continue;
+        }
 
-          if (lines.length === 1) {
-            return `<p>${formatInline(lines[0])}</p>`;
+        if (/^\d+[.)]\s+/.test(trimmed)) {
+          const items = [];
+          while (index < lines.length && /^\d+[.)]\s+/.test(lines[index].trim())) {
+            items.push(`<li>${formatInline(lines[index].trim().replace(/^\d+[.)]\s+/, ""))}</li>`);
+            index += 1;
           }
+          parts.push(`<ol>${items.join("")}</ol>`);
+          continue;
+        }
 
-          return `<p>${lines.map((line) => formatInline(line)).join("<br>")}</p>`;
-        })
-        .filter(Boolean)
-        .join("");
+        const paragraphLines = [];
+        while (index < lines.length) {
+          const next = lines[index].trim();
+          if (!next || /^#{1,3}\s/.test(next) || /^[-*]\s+/.test(next) || /^\d+[.)]\s+/.test(next)) {
+            break;
+          }
+          paragraphLines.push(formatInline(next));
+          index += 1;
+        }
+
+        if (paragraphLines.length === 1) {
+          parts.push(`<p>${paragraphLines[0]}</p>`);
+        } else if (paragraphLines.length > 1) {
+          parts.push(`<p>${paragraphLines.join("<br>")}</p>`);
+        }
+      }
+
+      return parts.join("");
     }
 
     function updateSendState() {
@@ -159,8 +203,15 @@
     function showChatThread() {
       if (chatStarted) return;
       chatStarted = true;
-      if (emptyState) emptyState.hidden = true;
+      if (emptyState) {
+        emptyState.hidden = true;
+        emptyState.setAttribute("aria-hidden", "true");
+      }
+      if (pageChat) {
+        pageChat.classList.add("is-chatting");
+      }
       messages.hidden = false;
+      messages.removeAttribute("hidden");
       scrollToLatest(messages);
     }
 
