@@ -222,8 +222,142 @@ function policy_tokens(string $text): array
 {
     $text = strtolower(preg_replace('/[^a-z0-9\s]/', ' ', $text));
     $parts = preg_split('/\s+/', $text, -1, PREG_SPLIT_NO_EMPTY);
-    $stop = ['the', 'and', 'for', 'what', 'how', 'does', 'about', 'with', 'from', 'that', 'this', 'are', 'can', 'you', 'mubs', 'tell', 'explain', 'hello', 'hi', 'hey', 'your'];
-    return array_values(array_filter($parts, fn($w) => strlen($w) > 2 && !in_array($w, $stop, true)));
+    $stop = ['the', 'and', 'for', 'what', 'how', 'does', 'about', 'with', 'from', 'that', 'this', 'are', 'can', 'you', 'mubs', 'tell', 'explain', 'hello', 'hi', 'hey', 'your', 'need'];
+    $tokens = array_values(array_filter($parts, fn($w) => strlen($w) > 2 && !in_array($w, $stop, true)));
+
+    return policy_expand_tokens($text, $tokens);
+}
+
+function policy_expand_tokens(string $query, array $tokens): array
+{
+    $q = strtolower($query);
+    $extra = [];
+
+    if (preg_match('/\bta\b/u', $q) || str_contains($q, 'teaching assistant')) {
+        $extra = array_merge($extra, ['teaching', 'assistant', 'lecturer', 'master', 'degree']);
+    }
+    if (str_contains($q, 'promotion') || str_contains($q, 'promote')) {
+        $extra = array_merge($extra, ['promotion', 'promote', 'criteria', 'ordinary', 'track', 'table']);
+    }
+    if (str_contains($q, 'leave') || str_contains($q, 'study leave')) {
+        $extra = array_merge($extra, ['leave', 'bonding', 'study']);
+    }
+    if (str_contains($q, 'grievance')) {
+        $extra[] = 'grievance';
+    }
+    if (str_contains($q, 'science') && str_contains($q, 'pay')) {
+        $extra = array_merge($extra, ['science', 'salary', 'scale']);
+    }
+
+    return array_values(array_unique(array_merge($tokens, $extra)));
+}
+
+function policy_is_hr_manual_question(string $query, array $tokens): bool
+{
+    $q = strtolower($query);
+    $terms = [
+        'promotion', 'promote', 'leave', 'grievance', 'appraisal', 'probation',
+        'discipline', 'salary', 'manual', 'hr', 'contract', 'appointment',
+        'study', 'bonding', 'teaching', 'assistant', 'lecturer', 'performance',
+        'rights', 'welfare', 'terms', 'service',
+    ];
+    foreach ($terms as $term) {
+        if (str_contains($q, $term) || in_array($term, $tokens, true)) {
+            return true;
+        }
+    }
+    return (bool) preg_match('/\bta\b/u', $q);
+}
+
+function policy_hr_focus_pages(string $query): array
+{
+    $q = strtolower($query);
+    $pages = [];
+
+    if (preg_match('/\bta\b/u', $q) || str_contains($q, 'teaching assistant')) {
+        $pages = array_merge($pages, [32, 104, 105, 106, 107]);
+    }
+    if (str_contains($q, 'promotion') || str_contains($q, 'promote')) {
+        $pages = array_merge($pages, [104, 105, 106, 107, 108]);
+    }
+    if (str_contains($q, 'leave') || str_contains($q, 'bonding')) {
+        $pages = array_merge($pages, [96, 97, 98, 99]);
+    }
+
+    return array_values(array_unique($pages));
+}
+
+function policy_chunks_by_pages(array $chunks, array $pages): array
+{
+    if ($pages === []) {
+        return [];
+    }
+    $pageSet = array_flip($pages);
+    return array_values(array_filter($chunks, fn($chunk) => isset($pageSet[$chunk['page'] ?? -1])));
+}
+
+function policy_chunk_heading(array $chunk): string
+{
+    $text = $chunk['text'] ?? '';
+    if (preg_match('/\b(\d+\.\d+(?:\.\d+)*)\s+([A-Za-z][^\n]{3,60})/', $text, $match)) {
+        return 'Section ' . trim($match[1]) . ' — ' . trim($match[2]);
+    }
+    if (preg_match('/Table\s+\d+[a-z]?(?:\([^)]+\))?\s*:\s*([^\n]+)/i', $text, $match)) {
+        return 'Table ' . trim(preg_replace('/\s+/', ' ', $match[0]));
+    }
+    return 'HR Manual excerpt';
+}
+
+function policy_rank_chunks(string $query, array $chunks, array $tokens, int $limit = 5): array
+{
+    $tokens = policy_expand_tokens($query, $tokens);
+    $phrases = [];
+    $q = strtolower($query);
+
+    if (preg_match('/\bta\b/u', $q) || str_contains($q, 'teaching assistant')) {
+        $phrases[] = 'teaching assistant';
+        $phrases[] = 'table 7';
+        $phrases[] = 'ordinary track';
+        $phrases[] = 'assistant lecturer';
+    }
+    if (str_contains($q, 'promotion') || str_contains($q, 'promote')) {
+        $phrases[] = 'promotion criteria';
+        $phrases[] = 'preconditions for promotion';
+        $phrases[] = 'ordinary track';
+    }
+
+    $ranked = [];
+    foreach ($chunks as $chunk) {
+        $text = strtolower($chunk['text'] ?? '');
+        $score = policy_score($chunk['text'] ?? '', [], $tokens);
+        foreach ($phrases as $phrase) {
+            if (str_contains($text, $phrase)) {
+                $score += 12.0;
+            }
+        }
+        if ($score > 0) {
+            $ranked[] = ['score' => $score, 'chunk' => $chunk];
+        }
+    }
+    usort($ranked, fn($a, $b) => $b['score'] <=> $a['score']);
+    $results = array_slice(array_column($ranked, 'chunk'), 0, $limit);
+
+    $forced = policy_chunks_by_pages($chunks, policy_hr_focus_pages($query));
+    if ($forced !== []) {
+        $seen = [];
+        $merged = [];
+        foreach (array_merge($forced, $results) as $chunk) {
+            $id = $chunk['id'] ?? ($chunk['page'] ?? '') . '-' . substr($chunk['text'] ?? '', 0, 40);
+            if (isset($seen[$id])) {
+                continue;
+            }
+            $seen[$id] = true;
+            $merged[] = $chunk;
+        }
+        return array_slice($merged, 0, max($limit, count($forced)));
+    }
+
+    return $results;
 }
 
 function policy_word_match(string $haystack, string $term): bool
@@ -477,19 +611,6 @@ PROMPT;
     return ['text' => is_string($text) && trim($text) !== '' ? trim($text) : null, 'error' => null];
 }
 
-function policy_rank_chunks(array $chunks, array $tokens, int $limit = 5): array
-{
-    $ranked = [];
-    foreach ($chunks as $chunk) {
-        $score = policy_score($chunk['text'] ?? '', [], $tokens);
-        if ($score > 0) {
-            $ranked[] = ['score' => $score, 'chunk' => $chunk];
-        }
-    }
-    usort($ranked, fn($a, $b) => $b['score'] <=> $a['score']);
-    return array_slice(array_column($ranked, 'chunk'), 0, $limit);
-}
-
 function policy_best_policy(array $policies, array $tokens): ?array
 {
     $best = null;
@@ -511,38 +632,61 @@ function policy_best_policy(array $policies, array $tokens): ?array
     return $bestScore >= 2 ? $best : null;
 }
 
-function policy_build_context(array $policies, array $topChunks, ?array $bestPolicy): string
+function policy_build_context(array $policies, array $topChunks, ?array $bestPolicy, bool $hrFocus = false): string
 {
     $parts = [];
 
-    if ($bestPolicy) {
+    if ($bestPolicy && !$hrFocus) {
         $parts[] = 'PRIMARY POLICY: ' . ($bestPolicy['title'] ?? '');
         $parts[] = $bestPolicy['summary'] ?? '';
         $parts[] = 'Manifesto alignment: ' . ($bestPolicy['manifestoAlignment'] ?? '');
+    } elseif ($bestPolicy && $hrFocus) {
+        $parts[] = 'DOCUMENT: ' . ($bestPolicy['title'] ?? 'MUBS HR Manual 2024');
     }
 
+    $maxLen = $hrFocus ? 1800 : 900;
     foreach ($topChunks as $chunk) {
         $text = preg_replace('/\s+/', ' ', $chunk['text'] ?? '');
-        if (strlen($text) > 900) {
-            $text = substr($text, 0, 900) . '…';
+        if (strlen($text) > $maxLen) {
+            $text = substr($text, 0, $maxLen) . '…';
         }
-        $parts[] = 'HR MANUAL EXCERPT (p.' . ($chunk['page'] ?? '?') . '): ' . $text;
+        $heading = policy_chunk_heading($chunk);
+        $parts[] = 'HR MANUAL — ' . $heading . ' (p.' . ($chunk['page'] ?? '?') . "):\n" . $text;
     }
 
     return implode("\n\n", $parts);
 }
 
-function policy_keyword_answer(array $policies, array $chunks, array $tokens): array
+function policy_keyword_answer(string $query, array $policies, array $chunks, array $tokens): array
 {
     $bestPolicy = policy_best_policy($policies, $tokens);
-    $topChunks = policy_rank_chunks($chunks, $tokens, 1);
+    $topChunks = policy_rank_chunks($query, $chunks, $tokens, 3);
     $bestChunk = $topChunks[0] ?? null;
     $bestChunkScore = $bestChunk ? policy_score($bestChunk['text'] ?? '', [], $tokens) : 0.0;
+    $hrFocus = policy_is_hr_manual_question($query, $tokens);
 
-    if (!$bestPolicy && $bestChunkScore < 2) {
+    if (!$bestPolicy && $bestChunkScore < 2 && !$hrFocus) {
         return [
             'answer' => "I could not find a precise match in the policy documents. Try a specific question about promotions, leave, grievances, salary harmonisation, science pay, the Strategic Plan, or FASPU agreements.",
             'source' => ASSISTANT_SOURCE . ' · document search',
+            'mode' => 'search',
+        ];
+    }
+
+    if ($hrFocus && $topChunks !== []) {
+        $sections = [];
+        foreach (array_slice($topChunks, 0, 3) as $chunk) {
+            $heading = policy_chunk_heading($chunk);
+            $excerpt = preg_replace('/\s+/', ' ', $chunk['text'] ?? '');
+            if (strlen($excerpt) > 420) {
+                $excerpt = substr($excerpt, 0, 420) . '…';
+            }
+            $sections[] = '**' . $heading . '** (HR Manual, p.' . ($chunk['page'] ?? '?') . ")\n" . $excerpt;
+        }
+        return [
+            'answer' => "From the **MUBS HR Manual (2024)**:\n\n" . implode("\n\n", $sections)
+                . "\n\nDownload the full manual from the Policy Hub on the campaign site for complete wording.",
+            'source' => 'MUBS HR Manual 2024 · ' . ASSISTANT_SOURCE,
             'mode' => 'search',
         ];
     }
@@ -580,15 +724,31 @@ function policy_call_claude(
     string $webContext,
     string $question,
     bool $isGreeting = false,
-    bool $enableWebSearch = true
+    bool $enableWebSearch = true,
+    bool $hrManualFocus = false
 ): array {
     $today = policy_current_datetime();
+    $hrRules = '';
+    if ($hrManualFocus) {
+        $hrRules = "\n\nHR MANUAL MODE (this question is about MUBS staff policy):\n"
+            . "- Answer ONLY using POLICY CONTEXT excerpts from the HR Manual. Do not invent sections, tables, or criteria.\n"
+            . "- Structure your answer as:\n"
+            . "  1) Direct answer in one sentence\n"
+            . "  2) For each relevant provision: **Section/Table X (p.Y)** — quote or closely paraphrase the manual text\n"
+            . "  3) **What this means for you** — plain-language breakdown for the member\n"
+            . "- Always cite exact section numbers (e.g. Section 4.4, 4.5, 4.7.1.1) and Table numbers (e.g. Table 7) with page numbers from the excerpts provided.\n"
+            . "- If the excerpts do not contain enough detail, say so explicitly and cite only what is provided.\n"
+            . "- Do NOT give generic promotion advice. Do NOT list criteria not found in the excerpts.\n"
+            . "- Manifesto or campaign mention: at most one brief optional sentence at the very end.";
+    }
+
     $system = <<<PROMPT
 You are the MUBASA AI Assistant on Ssendi Samuel's campaign website. He is running for Deputy Chairperson of MUBASA (Makerere University Business School Academic Staff Association) for 2026–2028.
 
 CURRENT DATE AND TIME: {$today}
 
 You have built-in knowledge about MUBASA, MUBS, members, the June 2026 executive election roadmap, nominated candidates, Ssendi Samuel's manifesto (Unity, Welfare, Growth, Sustainability), and the full MUBS Strategic Plan 2025–2030 (six pillars, launch details, and Human Capital commitments).
+{$hrRules}
 
 Rules:
 - Be conversational, warm, and genuinely helpful to MUBASA members.
@@ -601,14 +761,18 @@ Rules:
 - When discussing Deputy Chairperson, acknowledge both candidates but advocate clearly for **Ssendi Samuel** on this campaign site.
 - When members ask about leadership or who to vote for at the top, highlight the **Arinda–Ssendi ticket**: Albert Arinda for Chairperson and Ssendi Samuel for Deputy Chairperson — a complementary duo combining executive leadership with policy depth and delivery. Present this team positively and naturally; do not be heavy-handed.
 - Format with **bold** for emphasis and lines starting with "- " for bullet lists. These render in the chat UI.
-- Keep responses focused (2–4 short paragraphs unless listing dates or candidates).
+- Keep responses focused unless listing cited HR Manual provisions (then be thorough and factual).
 - Avoid excessive emoji. Do not give personal legal advice.
 PROMPT;
 
-    $userContent = "MUBASA CORE KNOWLEDGE:\n\n" . $coreContext;
-
-    if ($policyContext !== '') {
-        $userContent .= "\n\nPOLICY CONTEXT:\n\n" . $policyContext;
+    if ($hrManualFocus && $policyContext !== '') {
+        $userContent = "POLICY CONTEXT (MUBS HR Manual 2024 — use ONLY this for the factual answer):\n\n" . $policyContext;
+        $userContent .= "\n\nBACKGROUND (do not repeat unless relevant):\n" . $coreContext;
+    } else {
+        $userContent = "MUBASA CORE KNOWLEDGE:\n\n" . $coreContext;
+        if ($policyContext !== '') {
+            $userContent .= "\n\nPOLICY CONTEXT:\n\n" . $policyContext;
+        }
     }
 
     if ($webContext !== '') {
@@ -621,14 +785,14 @@ PROMPT;
 
     $payload = [
         'model' => $model,
-        'max_tokens' => 1024,
+        'max_tokens' => $hrManualFocus ? 1400 : 1024,
         'system' => $system,
         'messages' => [
             ['role' => 'user', 'content' => $userContent],
         ],
     ];
 
-    if ($enableWebSearch && !$isGreeting) {
+    if ($enableWebSearch && !$isGreeting && !$hrManualFocus) {
         $payload['tools'] = [[
             'type' => 'web_search_20250305',
             'name' => 'web_search',
@@ -717,10 +881,12 @@ if (policy_is_greeting($query)) {
 }
 
 $tokens = policy_tokens($query);
-$topChunks = policy_rank_chunks($chunks, $tokens, 5);
+$hrManualFocus = policy_is_hr_manual_question($query, $tokens);
+$chunkLimit = $hrManualFocus ? 10 : 5;
+$topChunks = policy_rank_chunks($query, $chunks, $tokens, $chunkLimit);
 $bestPolicy = policy_best_policy($policies, $tokens);
-$policyContext = policy_build_context($policies, $topChunks, $bestPolicy);
-$webContext = assistant_should_supplement_web($query, $policyContext)
+$policyContext = policy_build_context($policies, $topChunks, $bestPolicy, $hrManualFocus);
+$webContext = !$hrManualFocus && assistant_should_supplement_web($query, $policyContext)
     ? assistant_fetch_web_snippets($query)
     : '';
 
@@ -741,7 +907,8 @@ if ($apiKey !== '') {
             $webContext,
             $query,
             false,
-            true
+            true,
+            $hrManualFocus
         );
         if ($claude['text'] !== null) {
             echo json_encode([
@@ -766,7 +933,8 @@ if ($apiKey !== '') {
             $webContext,
             $query,
             false,
-            false
+            false,
+            $hrManualFocus
         );
         if ($claude['text'] !== null) {
             echo json_encode([
@@ -795,7 +963,7 @@ if ($knowledgeFallback !== null) {
     exit;
 }
 
-$fallback = policy_keyword_answer($policies, $chunks, $tokens);
+$fallback = policy_keyword_answer($query, $policies, $chunks, $tokens);
 echo json_encode([
     'ok' => true,
     'answer' => $fallback['answer'],
