@@ -1534,7 +1534,23 @@ a.contact-card:hover {
 
   .ai-capability-grid {
     grid-template-columns: 1fr 1fr;
-    gap: 0.4rem;
+    gap: 0.35rem;
+    margin-bottom: 0.4rem;
+  }
+
+  .ai-capability-card {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.45rem 0.55rem;
+  }
+
+  .ai-capability-desc {
+    display: none;
+  }
+
+  .ai-capability-label {
+    font-size: 0.72rem;
   }
 
   .ai-chat-empty {
