@@ -130,9 +130,6 @@
       chatStarted = true;
       if (emptyState) emptyState.hidden = true;
       messages.hidden = false;
-      if (suggestionsEl && !isPageMode) {
-        suggestionsEl.hidden = false;
-      }
       scrollToLatest(messages);
     }
 
@@ -174,18 +171,25 @@
     function renderSuggestions(list) {
       if (!suggestionsEl || !list?.length) return;
 
-      // Dedicated page already has capability cards; chips overlap messages on mobile.
-      if (isPageMode) {
+      if (!chatStarted) {
         suggestionsEl.hidden = true;
         suggestionsEl.innerHTML = "";
         return;
       }
 
       suggestionsEl.innerHTML = "";
+
+      if (isPageMode) {
+        const label = document.createElement("p");
+        label.className = "ai-chat-followup-label";
+        label.textContent = "Try asking";
+        suggestionsEl.appendChild(label);
+      }
+
       list.slice(0, 4).forEach((text) => {
         const btn = document.createElement("button");
         btn.type = "button";
-        btn.className = "chat-suggestion";
+        btn.className = isPageMode ? "ai-chat-chip" : "chat-suggestion";
         btn.textContent = text;
         btn.addEventListener("click", () => {
           input.value = text;
@@ -193,7 +197,9 @@
         });
         suggestionsEl.appendChild(btn);
       });
+
       suggestionsEl.hidden = false;
+      scrollToLatest(suggestionsEl);
     }
 
     function isOpen() {
