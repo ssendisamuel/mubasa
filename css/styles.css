@@ -1179,8 +1179,33 @@ body.policy-chat-open {
   line-height: 1.5;
 }
 
-.chat-msg p {
+.chat-msg p,
+.chat-msg-body p {
   margin: 0;
+}
+
+.chat-msg-body p + p,
+.chat-msg-body ul + p {
+  margin-top: 0.65rem;
+}
+
+.chat-msg-body ul {
+  margin: 0.55rem 0 0;
+  padding-left: 1.2rem;
+}
+
+.chat-msg-body li {
+  margin-bottom: 0.35rem;
+}
+
+.chat-msg-body strong {
+  font-weight: 700;
+  color: inherit;
+}
+
+.chat-msg-body em {
+  font-style: italic;
+  opacity: 0.95;
 }
 
 .chat-msg-user {

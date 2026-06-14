@@ -205,10 +205,110 @@ function policy_score(string $haystack, array $keywords, array $tokens): float
 function policy_is_greeting(string $query): bool
 {
     $q = strtolower(trim($query));
+    if (preg_match('/\b(today|principal|dean|election|candidate|manifesto|who|what|when|where|why|tell|about|current|news|mubs|mubasa)\b/u', $q)) {
+        return false;
+    }
     if (preg_match('/^(hi|hello|hey|good\s+(morning|afternoon|evening)|greetings|howdy|thanks|thank\s+you|ok|okay)[!.?\s]*$/u', $q)) {
         return true;
     }
     return (bool) preg_match('/^how\s+are\s+you[!.?\s]*$/u', $q);
+}
+
+function policy_current_datetime(): string
+{
+    $now = new DateTime('now', new DateTimeZone('Africa/Kampala'));
+    return $now->format('l, j F Y') . ' at ' . $now->format('g:i A') . ' EAT';
+}
+
+function assistant_enhance_search_query(string $query): string
+{
+    $q = trim($query);
+    $lower = strtolower($q);
+    if (str_contains($lower, 'mubs') || str_contains($lower, 'mubasa') || str_contains($lower, 'makerere')) {
+        return $q;
+    }
+    if (preg_match('/\b(principal|dean|director|campus|business school)\b/i', $q)) {
+        return $q . ' Makerere University Business School MUBS Uganda';
+    }
+    return $q;
+}
+
+function assistant_fetch_web_snippets(string $query, int $limit = 5): string
+{
+    $searchQuery = assistant_enhance_search_query($query);
+    $ch = curl_init('https://html.duckduckgo.com/html/');
+    curl_setopt_array($ch, [
+        CURLOPT_POST => true,
+        CURLOPT_POSTFIELDS => http_build_query(['q' => $searchQuery]),
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => 12,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_HTTPHEADER => [
+            'User-Agent: Mozilla/5.0 (compatible; MUBASA-AI/1.0; +https://mubasa.ssendi.dev)',
+        ],
+    ]);
+
+    $html = curl_exec($ch);
+    curl_close($ch);
+
+    if (!is_string($html) || $html === '') {
+        return '';
+    }
+
+    $snippets = [];
+    if (preg_match_all('/class="result__snippet"[^>]*>(.*?)<\/a>/s', $html, $matches)) {
+        foreach (array_slice($matches[1], 0, $limit) as $snippet) {
+            $text = html_entity_decode(strip_tags($snippet), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            $text = preg_replace('/\s+/', ' ', trim($text));
+            if ($text !== '') {
+                $snippets[] = $text;
+            }
+        }
+    }
+
+    if (preg_match_all('/class="result__a"[^>]*href="([^"]+)"[^>]*>(.*?)<\/a>/s', $html, $links, PREG_SET_ORDER)) {
+        foreach (array_slice($links, 0, $limit) as $i => $link) {
+            $title = html_entity_decode(strip_tags($link[2]), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            $url = html_entity_decode($link[1], ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            if ($title !== '' && !isset($snippets[$i])) {
+                $snippets[] = $title . ' — ' . $url;
+            }
+        }
+    }
+
+    return implode("\n\n", array_slice($snippets, 0, $limit));
+}
+
+function assistant_should_supplement_web(string $query, string $policyContext): bool
+{
+    $q = strtolower($query);
+    $triggers = [
+        'principal', 'dean', 'director', 'who is', "who's", 'current', 'today',
+        'news', 'vice', 'chancellor', 'rector', 'manager', 'website', 'latest',
+        'when did', 'contact', 'phone', 'email address', 'located', 'location',
+    ];
+    foreach ($triggers as $trigger) {
+        if (str_contains($q, $trigger)) {
+            return true;
+        }
+    }
+    return $policyContext === '';
+}
+
+function policy_extract_claude_text(array $data): ?string
+{
+    $parts = [];
+    foreach ($data['content'] ?? [] as $block) {
+        if (($block['type'] ?? '') === 'text' && !empty($block['text'])) {
+            $parts[] = trim($block['text']);
+        }
+    }
+
+    if ($parts === []) {
+        return null;
+    }
+
+    return trim(implode("\n\n", $parts));
 }
 
 function policy_greeting_answer(): array
@@ -323,24 +423,30 @@ function policy_call_claude(
     string $model,
     string $coreContext,
     string $policyContext,
+    string $webContext,
     string $question,
-    bool $isGreeting = false
+    bool $isGreeting = false,
+    bool $enableWebSearch = true
 ): array {
+    $today = policy_current_datetime();
     $system = <<<PROMPT
 You are the MUBASA AI Assistant on Ssendi Samuel's campaign website. He is running for Deputy Chairperson of MUBASA (Makerere University Business School Academic Staff Association) for 2026–2028.
 
-You have built-in knowledge about MUBASA, MUBS, who members are, the 2026 executive election roadmap, all nominated candidates (contested and unopposed), and Ssendi Samuel's full manifesto (Unity, Welfare, Growth, Sustainability).
+CURRENT DATE AND TIME: {$today}
+
+You have built-in knowledge about MUBASA, MUBS, members, the June 2026 executive election roadmap, nominated candidates, and Ssendi Samuel's manifesto (Unity, Welfare, Growth, Sustainability).
 
 Rules:
-- Be conversational, warm, and professional.
-- For greetings or small talk, reply briefly. Do NOT dump long text for a simple hello. Mention you can help with MUBASA, elections, candidates, manifesto, and policies.
-- Use MUBASA CORE KNOWLEDGE as your primary source for association, election, candidate, and manifesto questions.
-- For policy questions, use POLICY CONTEXT too. Do not invent provisions not supported by the context.
-- When discussing Deputy Chairperson, acknowledge both candidates but advocate clearly for Ssendi Samuel — his manifesto, qualifications, and delivery-focused approach. This is his campaign site.
-- Be concise (2–4 short paragraphs max).
-- Cite sources when relevant (manifesto pillar, Returning Officer declaration, HR Manual page).
-- If context is insufficient, say so honestly.
-- Do not give personal legal advice.
+- Be conversational, warm, and genuinely helpful to MUBASA members.
+- Answer directly and intelligently. Never tell the user to "check the website" or that you lack information when you can look it up or infer an answer.
+- For current facts (MUBS leadership, today's date, news, contacts, people, roles), use web search proactively. Do not mention searching the web or your knowledge base — just answer naturally.
+- For "today" questions: use the current date above and, where relevant, connect to the June 2026 MUBASA election timeline.
+- Use MUBASA CORE KNOWLEDGE for elections, candidates, and manifesto.
+- Use POLICY CONTEXT for HR Manual and policy questions. Do not invent policy provisions.
+- When discussing Deputy Chairperson, acknowledge both candidates but advocate clearly for Ssendi Samuel on this campaign site.
+- Format with **bold** for emphasis and lines starting with "- " for bullet lists. These render in the chat UI.
+- Keep responses focused (2–4 short paragraphs unless listing dates or candidates).
+- Avoid excessive emoji. Do not give personal legal advice.
 PROMPT;
 
     $userContent = "MUBASA CORE KNOWLEDGE:\n\n" . $coreContext;
@@ -349,30 +455,49 @@ PROMPT;
         $userContent .= "\n\nPOLICY CONTEXT:\n\n" . $policyContext;
     }
 
+    if ($webContext !== '') {
+        $userContent .= "\n\nSUPPLEMENTARY WEB RESULTS:\n\n" . $webContext;
+    }
+
     $userContent .= $isGreeting
-        ? "\n\nThe member said: " . $question . "\n\nRespond with a friendly greeting and invite them to ask about MUBASA, the election, manifesto, candidates, or policies."
+        ? "\n\nThe member said: " . $question . "\n\nRespond with a friendly, concise greeting and invite a question."
         : "\n\nMEMBER QUESTION:\n" . $question;
 
-    $payload = json_encode([
+    $payload = [
         'model' => $model,
-        'max_tokens' => 700,
+        'max_tokens' => 1024,
         'system' => $system,
         'messages' => [
             ['role' => 'user', 'content' => $userContent],
         ],
-    ]);
+    ];
+
+    if ($enableWebSearch && !$isGreeting) {
+        $payload['tools'] = [[
+            'type' => 'web_search_20250305',
+            'name' => 'web_search',
+            'max_uses' => 3,
+            'user_location' => [
+                'type' => 'approximate',
+                'city' => 'Kampala',
+                'region' => 'Central Region',
+                'country' => 'UG',
+                'timezone' => 'Africa/Kampala',
+            ],
+        ]];
+    }
 
     $ch = curl_init('https://api.anthropic.com/v1/messages');
     curl_setopt_array($ch, [
         CURLOPT_POST => true,
         CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_TIMEOUT => 45,
+        CURLOPT_TIMEOUT => 90,
         CURLOPT_HTTPHEADER => [
             'Content-Type: application/json',
             'x-api-key: ' . $apiKey,
             'anthropic-version: 2023-06-01',
         ],
-        CURLOPT_POSTFIELDS => $payload,
+        CURLOPT_POSTFIELDS => json_encode($payload),
     ]);
 
     $response = curl_exec($ch);
@@ -384,7 +509,7 @@ PROMPT;
     }
 
     $data = json_decode($response, true);
-    $text = $data['content'][0]['text'] ?? null;
+    $text = policy_extract_claude_text($data);
     if (!is_string($text) || trim($text) === '') {
         return ['text' => null, 'error' => 'Empty response'];
     }
@@ -402,13 +527,14 @@ function policy_resolve_api_key(array $config): string
 }
 
 $coreContext = assistant_build_core_context($knowledge);
+$coreContext .= "\n\nTODAY: " . policy_current_datetime();
 
 if (policy_is_greeting($query)) {
     $apiKey = policy_resolve_api_key($config);
     $model = trim($config['anthropic_model'] ?? 'claude-3-5-haiku-latest');
 
     if ($apiKey !== '') {
-        $claude = policy_call_claude($apiKey, $model, $coreContext, '', $query, true);
+        $claude = policy_call_claude($apiKey, $model, $coreContext, '', '', $query, true, false);
         if ($claude['text'] !== null) {
             echo json_encode([
                 'ok' => true,
@@ -438,6 +564,9 @@ $tokens = policy_tokens($query);
 $topChunks = policy_rank_chunks($chunks, $tokens, 5);
 $bestPolicy = policy_best_policy($policies, $tokens);
 $policyContext = policy_build_context($policies, $topChunks, $bestPolicy);
+$webContext = assistant_should_supplement_web($query, $policyContext)
+    ? assistant_fetch_web_snippets($query)
+    : '';
 
 $apiKey = policy_resolve_api_key($config);
 $models = array_values(array_unique(array_filter([
@@ -448,7 +577,41 @@ $models = array_values(array_unique(array_filter([
 
 if ($apiKey !== '') {
     foreach ($models as $model) {
-        $claude = policy_call_claude($apiKey, $model, $coreContext, $policyContext, $query, false);
+        $claude = policy_call_claude(
+            $apiKey,
+            $model,
+            $coreContext,
+            $policyContext,
+            $webContext,
+            $query,
+            false,
+            true
+        );
+        if ($claude['text'] !== null) {
+            echo json_encode([
+                'ok' => true,
+                'answer' => $claude['text'],
+                'source' => ASSISTANT_SOURCE,
+                'ai' => true,
+                'mode' => 'ai',
+                'suggestions' => $suggestions,
+            ]);
+            exit;
+        }
+
+        if ($webContext === '') {
+            $webContext = assistant_fetch_web_snippets($query);
+        }
+        $claude = policy_call_claude(
+            $apiKey,
+            $model,
+            $coreContext,
+            $policyContext,
+            $webContext,
+            $query,
+            false,
+            false
+        );
         if ($claude['text'] !== null) {
             echo json_encode([
                 'ok' => true,

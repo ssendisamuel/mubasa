@@ -45,6 +45,40 @@
         .replace(/"/g, "&quot;");
     }
 
+    function formatInline(text) {
+      return text
+        .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+        .replace(/(^|[^*])\*(?!\s)(.+?)(?<!\s)\*(?!\*)/g, "$1<em>$2</em>");
+    }
+
+    function formatMessage(text) {
+      const escaped = escapeHtml(String(text)).replace(/\r\n/g, "\n");
+      const blocks = escaped.split(/\n\n+/);
+
+      return blocks
+        .map((block) => {
+          const lines = block.split("\n").filter((line) => line.trim() !== "");
+          if (lines.length === 0) return "";
+
+          const isBulletList = lines.every((line) => /^\s*-\s+/.test(line));
+          if (isBulletList) {
+            const items = lines
+              .map((line) => line.replace(/^\s*-\s+/, ""))
+              .map((line) => `<li>${formatInline(line)}</li>`)
+              .join("");
+            return `<ul>${items}</ul>`;
+          }
+
+          if (lines.length === 1) {
+            return `<p>${formatInline(lines[0])}</p>`;
+          }
+
+          return `<p>${lines.map((line) => formatInline(line)).join("<br>")}</p>`;
+        })
+        .filter(Boolean)
+        .join("");
+    }
+
     function resizeInput() {
       if (input.tagName !== "TEXTAREA") return;
       input.style.height = "auto";
@@ -63,7 +97,7 @@
       showChatThread();
       const item = document.createElement("div");
       item.className = `chat-msg chat-msg-${role}${isPageMode ? " chat-msg-page" : ""}`;
-      item.innerHTML = `<p>${escapeHtml(text).replace(/\n/g, "<br>")}</p>`;
+      item.innerHTML = `<div class="chat-msg-body">${formatMessage(text)}</div>`;
       if (source && role === "bot") {
         const meta = document.createElement("span");
         meta.className = "chat-msg-source";
