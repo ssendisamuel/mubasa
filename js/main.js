@@ -31,9 +31,11 @@
   );
 
   document.getElementById("policy-chat-open")?.addEventListener("click", () => {
-    const toggle = document.getElementById("policy-chat-toggle");
-    const panel = document.getElementById("policy-chat-panel");
-    if (panel?.hidden && toggle) toggle.click();
+    if (typeof window.openPolicyChat === "function") {
+      window.openPolicyChat();
+      return;
+    }
+    document.getElementById("policy-chat-toggle")?.click();
   });
 
   const form = document.getElementById("feedback-form");
