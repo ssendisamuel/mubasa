@@ -46,7 +46,7 @@
     const messages = document.getElementById("policy-chat-messages");
     const suggestionsEl = document.getElementById("policy-chat-suggestions");
     const emptyState = document.getElementById("ai-chat-empty");
-    const capabilityGrid = document.getElementById("ai-capability-grid");
+    const starterGrid = document.getElementById("ai-starter-grid");
     const scrollContainer = isPageMode
       ? document.querySelector(".ai-chat-messages-wrap")
       : messages;
@@ -54,6 +54,8 @@
     if (!form || !input || !messages || (!isPageMode && (!widget || !toggle || !panel))) {
       return;
     }
+
+    const submitBtn = form.querySelector('button[type="submit"]');
 
     let policiesCache = null;
     let knowledgeCache = null;
@@ -102,10 +104,39 @@
         .join("");
     }
 
+    function updateSendState() {
+      if (!submitBtn) return;
+      submitBtn.disabled = !input.value.trim();
+    }
+
+    function buildPageMessage(text, role, source) {
+      const item = document.createElement("div");
+      const roleClass = role === "user" ? "user" : "assistant";
+      item.className = `ai-msg ai-msg-${roleClass}`;
+
+      if (role === "user") {
+        item.innerHTML = `<div class="ai-msg-content"><div class="ai-msg-bubble chat-msg-body">${formatMessage(text)}</div></div>`;
+        return item;
+      }
+
+      const sourceHtml = source
+        ? `<span class="chat-msg-source">${escapeHtml(source)}</span>`
+        : "";
+      item.innerHTML = `
+        <div class="ai-msg-avatar" aria-hidden="true">
+          <img src="assets/images/mubs-logo.png" alt="" width="28" height="28">
+        </div>
+        <div class="ai-msg-content">
+          <div class="chat-msg-body">${formatMessage(text)}</div>
+          ${sourceHtml}
+        </div>`;
+      return item;
+    }
+
     function resizeInput() {
       if (input.tagName !== "TEXTAREA") return;
       input.style.height = "auto";
-      input.style.height = `${Math.min(input.scrollHeight, 160)}px`;
+      input.style.height = `${Math.min(input.scrollHeight, isPageMode ? 140 : 160)}px`;
     }
 
     function scrollToLatest(anchor) {
@@ -138,8 +169,19 @@
       if (typingNode) return typingNode;
 
       typingNode = document.createElement("div");
-      typingNode.className = `chat-msg chat-msg-bot chat-msg-typing${isPageMode ? " chat-msg-page" : ""}`;
-      typingNode.innerHTML = '<div class="chat-msg-body"><p class="chat-typing"><span></span><span></span><span></span></p></div>';
+      if (isPageMode) {
+        typingNode.className = "ai-msg ai-msg-assistant ai-msg-typing";
+        typingNode.innerHTML = `
+          <div class="ai-msg-avatar" aria-hidden="true">
+            <img src="assets/images/mubs-logo.png" alt="" width="28" height="28">
+          </div>
+          <div class="ai-msg-content">
+            <div class="chat-msg-body"><p class="chat-typing"><span></span><span></span><span></span></p></div>
+          </div>`;
+      } else {
+        typingNode.className = "chat-msg chat-msg-bot chat-msg-typing";
+        typingNode.innerHTML = '<div class="chat-msg-body"><p class="chat-typing"><span></span><span></span><span></span></p></div>';
+      }
       messages.appendChild(typingNode);
       scrollToLatest(typingNode);
       return typingNode;
@@ -155,15 +197,22 @@
     function addMessage(text, role, source) {
       hideTyping();
       showChatThread();
-      const item = document.createElement("div");
-      item.className = `chat-msg chat-msg-${role}${isPageMode ? " chat-msg-page" : ""}`;
-      item.innerHTML = `<div class="chat-msg-body">${formatMessage(text)}</div>`;
-      if (source && role === "bot") {
-        const meta = document.createElement("span");
-        meta.className = "chat-msg-source";
-        meta.textContent = source;
-        item.appendChild(meta);
-      }
+
+      const item = isPageMode
+        ? buildPageMessage(text, role, source)
+        : (() => {
+            const node = document.createElement("div");
+            node.className = `chat-msg chat-msg-${role}`;
+            node.innerHTML = `<div class="chat-msg-body">${formatMessage(text)}</div>`;
+            if (source && role === "bot") {
+              const meta = document.createElement("span");
+              meta.className = "chat-msg-source";
+              meta.textContent = source;
+              node.appendChild(meta);
+            }
+            return node;
+          })();
+
       messages.appendChild(item);
       scrollToLatest(item);
     }
@@ -238,18 +287,22 @@
       form.requestSubmit();
     }
 
-    capabilityGrid?.querySelectorAll("[data-prompt]").forEach((btn) => {
+    starterGrid?.querySelectorAll("[data-prompt]").forEach((btn) => {
       btn.addEventListener("click", () => submitPrompt(btn.getAttribute("data-prompt") || ""));
     });
 
     if (input.tagName === "TEXTAREA") {
-      input.addEventListener("input", resizeInput);
+      input.addEventListener("input", () => {
+        resizeInput();
+        updateSendState();
+      });
       input.addEventListener("keydown", (event) => {
         if (event.key === "Enter" && !event.shiftKey) {
           event.preventDefault();
           form.requestSubmit();
         }
       });
+      updateSendState();
     }
 
     function tokenize(text) {
@@ -411,9 +464,9 @@
       addMessage(text, "user");
       input.value = "";
       resizeInput();
+      updateSendState();
       showTyping();
 
-      const submitBtn = form.querySelector('button[type="submit"]');
       submitBtn.disabled = true;
 
       try {
@@ -429,6 +482,8 @@
             addMessage(result.answer, "bot", result.source || ASSISTANT_SOURCE);
             renderSuggestions(result.suggestions || defaultSuggestions);
             submitBtn.disabled = false;
+            updateSendState();
+            input.focus();
             return;
           }
         }
@@ -449,6 +504,7 @@
       } finally {
         hideTyping();
         submitBtn.disabled = false;
+        updateSendState();
         input.focus();
       }
     });
