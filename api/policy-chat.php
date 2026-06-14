@@ -214,7 +214,10 @@ function policy_is_greeting(string $query): bool
 function policy_greeting_answer(): array
 {
     return [
-        'answer' => "Hello! I am the MUBASA AI Assistant. I know about MUBASA and MUBS, the 2026 executive election roadmap, nominated candidates, Ssendi Samuel's manifesto, and MUBS policy documents.\n\nAsk about the election dates, candidates, manifesto pillars, promotions, leave, science pay, or staff welfare.",
+        'answer' => "Welcome — I'm here to help MUBASA members get straight answers.\n\n"
+            . "Ask me about the June 2026 executive elections, nominated candidates, manifesto commitments, "
+            . "or how MUBS policies on promotions, leave, science pay, and welfare apply to you.\n\n"
+            . "What would you like to know?",
         'source' => ASSISTANT_SOURCE,
         'mode' => 'greeting',
     ];

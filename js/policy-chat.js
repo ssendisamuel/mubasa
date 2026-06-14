@@ -1,12 +1,24 @@
 (function () {
   const ASSISTANT_SOURCE = "AI Model Developed and Trained by Ssendi";
 
+  const WIDGET_INTRO =
+    "Welcome — I'm here to help MUBASA members get straight answers.\n\n" +
+    "Ask me about the June 2026 executive elections, nominated candidates, manifesto commitments, " +
+    "or how MUBS policies on promotions, leave, science pay, and welfare apply to you.\n\n" +
+    "What would you like to know?";
+
+  const defaultSuggestions = [
+    "When are the MUBASA elections in June 2026?",
+    "Who is running for Deputy Chairperson?",
+    "What are the four manifesto pillars?",
+    "What does the HR Manual say about promotions?",
+  ];
+
   function initPolicyChat() {
     const pageChat = document.getElementById("ai-assistant-chat");
     const widget = document.getElementById("policy-chat-widget");
     const isPageMode = Boolean(pageChat);
 
-    const root = pageChat || widget;
     const toggle = document.getElementById("policy-chat-toggle");
     const panel = document.getElementById("policy-chat-panel");
     const closeBtn = document.getElementById("policy-chat-close");
@@ -14,6 +26,8 @@
     const input = document.getElementById("policy-chat-input");
     const messages = document.getElementById("policy-chat-messages");
     const suggestionsEl = document.getElementById("policy-chat-suggestions");
+    const emptyState = document.getElementById("ai-chat-empty");
+    const capabilityGrid = document.getElementById("ai-capability-grid");
 
     if (!form || !input || !messages || (!isPageMode && (!widget || !toggle || !panel))) {
       return;
@@ -21,16 +35,7 @@
 
     let policiesCache = null;
     let knowledgeCache = null;
-
-    const intro =
-      "Hello! I am the MUBASA AI Assistant. I know about MUBASA and MUBS, the 2026 executive election roadmap, nominated candidates, Ssendi Samuel's manifesto, and MUBS policy documents.\n\nAsk about voting dates, candidates, manifesto pillars, promotions, leave, science pay, or staff welfare.";
-
-    const defaultSuggestions = [
-      "What is Ssendi Samuel's manifesto for Deputy Chairperson?",
-      "When is MUBASA voting in 2026?",
-      "Who are the Deputy Chairperson candidates?",
-      "What does the HR Manual say about promotions?",
-    ];
+    let chatStarted = false;
 
     function escapeHtml(str) {
       return str
@@ -40,9 +45,24 @@
         .replace(/"/g, "&quot;");
     }
 
+    function resizeInput() {
+      if (input.tagName !== "TEXTAREA") return;
+      input.style.height = "auto";
+      input.style.height = `${Math.min(input.scrollHeight, 160)}px`;
+    }
+
+    function showChatThread() {
+      if (chatStarted) return;
+      chatStarted = true;
+      if (emptyState) emptyState.hidden = true;
+      messages.hidden = false;
+      if (suggestionsEl) suggestionsEl.hidden = false;
+    }
+
     function addMessage(text, role, source) {
+      showChatThread();
       const item = document.createElement("div");
-      item.className = `chat-msg chat-msg-${role}`;
+      item.className = `chat-msg chat-msg-${role}${isPageMode ? " chat-msg-page" : ""}`;
       item.innerHTML = `<p>${escapeHtml(text).replace(/\n/g, "<br>")}</p>`;
       if (source && role === "bot") {
         const meta = document.createElement("span");
@@ -60,7 +80,7 @@
       list.slice(0, 4).forEach((text) => {
         const btn = document.createElement("button");
         btn.type = "button";
-        btn.className = "chat-suggestion";
+        btn.className = isPageMode ? "ai-chat-chip" : "chat-suggestion";
         btn.textContent = text;
         btn.addEventListener("click", () => {
           input.value = text;
@@ -68,6 +88,9 @@
         });
         suggestionsEl.appendChild(btn);
       });
+      if (isPageMode && chatStarted) {
+        suggestionsEl.hidden = false;
+      }
     }
 
     function isOpen() {
@@ -82,7 +105,7 @@
       toggle.setAttribute("aria-expanded", "true");
       document.body.classList.add("policy-chat-open");
       input.focus({ preventScroll: true });
-      bootChat();
+      bootWidgetChat();
     }
 
     function closePanel() {
@@ -94,11 +117,30 @@
       document.body.classList.remove("policy-chat-open");
     }
 
-    function bootChat() {
+    function bootWidgetChat() {
       if (messages.childElementCount === 0) {
-        addMessage(intro, "bot", ASSISTANT_SOURCE);
+        addMessage(WIDGET_INTRO, "bot", ASSISTANT_SOURCE);
         renderSuggestions(defaultSuggestions);
       }
+    }
+
+    function submitPrompt(text) {
+      input.value = text;
+      form.requestSubmit();
+    }
+
+    capabilityGrid?.querySelectorAll("[data-prompt]").forEach((btn) => {
+      btn.addEventListener("click", () => submitPrompt(btn.getAttribute("data-prompt") || ""));
+    });
+
+    if (input.tagName === "TEXTAREA") {
+      input.addEventListener("input", resizeInput);
+      input.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" && !event.shiftKey) {
+          event.preventDefault();
+          form.requestSubmit();
+        }
+      });
     }
 
     function tokenize(text) {
@@ -159,7 +201,7 @@
     async function answerLocally(query) {
       if (isGreeting(query)) {
         return {
-          answer: intro,
+          answer: WIDGET_INTRO,
           source: ASSISTANT_SOURCE,
         };
       }
@@ -167,7 +209,10 @@
       const knowledge = await loadKnowledge();
       const tokens = tokenize(query);
       const knowledgeBlob = JSON.stringify(knowledge).toLowerCase();
-      const electionTerms = ["election", "vote", "voting", "campaign", "debate", "nomination", "handover", "roadmap", "candidate", "manifesto", "mubasa", "ssendi", "deputy"];
+      const electionTerms = [
+        "election", "vote", "voting", "campaign", "debate", "nomination",
+        "handover", "roadmap", "candidate", "manifesto", "mubasa", "ssendi", "deputy",
+      ];
       const knowledgeScore = tokens.reduce((score, token) => {
         let next = wordMatch(knowledgeBlob, token) ? score + 2 : score;
         if (electionTerms.includes(token)) next += 3;
@@ -183,10 +228,12 @@
 
         return {
           answer:
-            `${candidate.name || "Ssendi Samuel"} is running for ${candidate.position || "Deputy Chairperson"} with the slogan "${candidate.slogan || "Results, No Rhetoric"}".\n\n` +
+            `Here is a quick overview for members.\n\n` +
             `2026 election roadmap:\n${roadmap}\n\n` +
-            `Deputy Chairperson candidates: ${deputy.join(" and ")}.\n\n` +
-            "Ask a specific question about manifesto pillars, policies, or any position for more detail.",
+            `Deputy Chairperson: ${deputy.join(" and ")}.\n\n` +
+            `${candidate.name || "Ssendi Samuel"}'s manifesto rests on Unity, Welfare, Growth, and Sustainability — ` +
+            `with practical commitments on promotions, science pay, healthcare, and a stronger voice for every campus.\n\n` +
+            "Ask about any specific pillar, position, or policy for more detail.",
           source: ASSISTANT_SOURCE,
           suggestions: knowledge.suggestedQuestions || defaultSuggestions,
         };
@@ -214,7 +261,7 @@
       if (!best || bestScore < 2) {
         return {
           answer:
-            "I could not find a precise match. Try asking about the 2026 election, candidates, manifesto pillars, promotions, leave, science pay, FASPU, or the Strategic Plan.",
+            "I could not find a precise match in what I have loaded. Try asking about the June 2026 election dates, nominated candidates, manifesto pillars, promotions, leave, science pay, or FASPU.",
           source: ASSISTANT_SOURCE,
           suggestions: defaultSuggestions,
         };
@@ -242,8 +289,6 @@
       });
 
       window.openPolicyChat = openPanel;
-    } else {
-      bootChat();
     }
 
     form.addEventListener("submit", async (event) => {
@@ -253,6 +298,8 @@
 
       addMessage(text, "user");
       input.value = "";
+      resizeInput();
+
       const submitBtn = form.querySelector('button[type="submit"]');
       submitBtn.disabled = true;
 
@@ -266,8 +313,7 @@
         if (response.ok) {
           const result = await response.json();
           if (result.ok) {
-            const source = result.source || ASSISTANT_SOURCE;
-            addMessage(result.answer, "bot", source);
+            addMessage(result.answer, "bot", result.source || ASSISTANT_SOURCE);
             renderSuggestions(result.suggestions || defaultSuggestions);
             submitBtn.disabled = false;
             return;
@@ -283,12 +329,13 @@
         renderSuggestions(local.suggestions || defaultSuggestions);
       } catch {
         addMessage(
-          "Sorry, I could not load data right now. Please browse the manifesto and Policy Hub on the main site.",
+          "Sorry — I could not reach the server right now. You can still browse the manifesto and Policy Hub on the main site.",
           "bot",
           ASSISTANT_SOURCE
         );
       } finally {
         submitBtn.disabled = false;
+        input.focus();
       }
     });
   }

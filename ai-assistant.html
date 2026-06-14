@@ -3,98 +3,108 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="MUBASA AI Assistant — ask about MUBASA, the 2026 election, candidates, Ssendi Samuel's manifesto, and MUBS policies. AI model developed and trained by Ssendi.">
-  <meta property="og:title" content="MUBASA AI Assistant | Ssendi Samuel Campaign">
-  <meta property="og:description" content="Your guide to MUBASA, the 2026 election roadmap, manifesto, candidates, and staff policies.">
+  <meta name="description" content="MUBASA AI Assistant — clear answers for MUBASA members on elections, welfare, manifesto, and MUBS staff policies.">
+  <meta property="og:title" content="MUBASA AI Assistant">
+  <meta property="og:description" content="Ask about the 2026 elections, candidates, manifesto, and your rights at MUBS.">
   <meta property="og:url" content="https://mubasa.ssendi.dev/ai-assistant.html">
-  <title>MUBASA AI Assistant | Ssendi Samuel Campaign</title>
+  <title>MUBASA AI Assistant</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="icon" type="image/png" href="assets/images/mubs-logo.png">
-  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/styles.css?v=20260614">
 </head>
 <body class="ai-assistant-body">
   <a class="skip-link" href="#main">Skip to content</a>
 
-  <header class="site-header" id="top">
+  <header class="site-header site-header-compact" id="top">
     <div class="container header-inner">
       <a class="brand" href="index.html">
-        <img src="assets/images/mubs-logo.png" alt="Makerere University Business School logo" class="brand-logo" width="48" height="48">
+        <img src="assets/images/mubs-logo.png" alt="Makerere University Business School logo" class="brand-logo" width="44" height="44">
         <span class="brand-text">
-          <strong>Ssendi Samuel</strong>
-          <small>For Deputy Chairperson, MUBASA</small>
+          <strong>MUBASA AI</strong>
+          <small>Member assistant · 2026</small>
         </span>
       </a>
       <button class="nav-toggle" aria-label="Open menu" aria-expanded="false">
         <span></span><span></span><span></span>
       </button>
       <nav class="site-nav" aria-label="Primary">
-        <a href="index.html#message">Message</a>
+        <a href="index.html">Campaign home</a>
         <a href="index.html#manifesto">Manifesto</a>
         <a href="index.html#policies">Policies</a>
         <a href="ai-assistant.html" aria-current="page">AI Assistant</a>
-        <a href="index.html#feedback">Your Voice</a>
         <a href="index.html#contact">Contact</a>
       </nav>
     </div>
   </header>
 
-  <main id="main" class="ai-assistant-main">
-    <section class="ai-assistant-hero">
-      <div class="container ai-assistant-hero-grid">
-        <div>
-          <p class="eyebrow">Interactive · Election 2026</p>
-          <h1>MUBASA AI Assistant</h1>
-          <p class="ai-assistant-lead">
-            Ask about MUBASA, the 2026 executive election roadmap, nominated candidates, Ssendi Samuel's manifesto, and MUBS staff policies — HR Manual, Strategic Plan, FASPU, and more.
-          </p>
-          <p class="ai-assistant-credit">AI model developed and trained by Ssendi</p>
-        </div>
-        <ul class="ai-assistant-topics">
-          <li>MUBASA &amp; MUBS context</li>
-          <li>2026 election dates &amp; candidates</li>
-          <li>Manifesto pillars &amp; commitments</li>
-          <li>Promotions, leave &amp; science pay</li>
-        </ul>
-      </div>
-    </section>
-
-    <section class="ai-assistant-chat-section" aria-label="MUBASA AI Assistant chat">
-      <div class="container">
-        <div class="ai-assistant-chat-shell" id="ai-assistant-chat">
-          <div class="policy-chat-header">
-            <div>
-              <strong>MUBASA AI Assistant</strong>
-              <span>MUBASA · Election 2026 · Manifesto · Policies</span>
+  <main id="main" class="ai-assistant-layout">
+    <div class="ai-chat-app" id="ai-assistant-chat">
+      <div class="ai-chat-messages-wrap">
+        <div class="ai-chat-empty" id="ai-chat-empty">
+          <div class="ai-chat-empty-inner">
+            <div class="ai-chat-mark">
+              <img src="assets/images/mubs-logo.png" alt="" width="56" height="56" aria-hidden="true">
             </div>
+            <h1 class="ai-chat-empty-title">How can I help you today?</h1>
+            <p class="ai-chat-empty-lead">
+              Built for MUBASA members — clear answers on the June 2026 elections, who's running,
+              staff welfare, manifesto commitments, and the policies that shape our work at MUBS.
+            </p>
+            <div class="ai-capability-grid" id="ai-capability-grid">
+              <button type="button" class="ai-capability-card" data-prompt="When are the MUBASA executive elections and what happens on each date?">
+                <span class="ai-capability-icon" aria-hidden="true">📅</span>
+                <span class="ai-capability-label">Election roadmap</span>
+                <span class="ai-capability-desc">Key dates from nominations to handover</span>
+              </button>
+              <button type="button" class="ai-capability-card" data-prompt="Who are the nominated candidates for each MUBASA executive position?">
+                <span class="ai-capability-icon" aria-hidden="true">🗳️</span>
+                <span class="ai-capability-label">Candidates</span>
+                <span class="ai-capability-desc">Contested and unopposed nominations</span>
+              </button>
+              <button type="button" class="ai-capability-card" data-prompt="What are the four manifesto pillars and what do they mean for members?">
+                <span class="ai-capability-icon" aria-hidden="true">📋</span>
+                <span class="ai-capability-label">Manifesto</span>
+                <span class="ai-capability-desc">Unity, Welfare, Growth, Sustainability</span>
+              </button>
+              <button type="button" class="ai-capability-card" data-prompt="What does the HR Manual say about promotions, leave, and science pay at MUBS?">
+                <span class="ai-capability-icon" aria-hidden="true">📖</span>
+                <span class="ai-capability-label">Your rights at MUBS</span>
+                <span class="ai-capability-desc">Promotions, leave, pay, and grievances</span>
+              </button>
+            </div>
+            <p class="ai-chat-credit">AI model developed and trained by Ssendi</p>
           </div>
-          <div class="policy-chat-messages" id="policy-chat-messages"></div>
-          <div class="policy-chat-suggestions" id="policy-chat-suggestions"></div>
-          <form class="policy-chat-form" id="policy-chat-form">
-            <input type="text" id="policy-chat-input" placeholder="Ask about MUBASA, the election, manifesto, or policies…" autocomplete="off" maxlength="500" required>
-            <button type="submit" aria-label="Send message">Send</button>
-          </form>
         </div>
+        <div class="policy-chat-messages ai-chat-thread" id="policy-chat-messages" hidden></div>
       </div>
-    </section>
+
+      <div class="policy-chat-suggestions ai-chat-suggestions" id="policy-chat-suggestions" hidden></div>
+
+      <form class="ai-chat-composer" id="policy-chat-form">
+        <div class="ai-chat-composer-inner">
+          <textarea
+            id="policy-chat-input"
+            rows="1"
+            placeholder="Message MUBASA AI…"
+            autocomplete="off"
+            maxlength="500"
+            required
+            aria-label="Your message"
+          ></textarea>
+          <button type="submit" class="ai-chat-send" aria-label="Send message">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M12 19V5M12 5L5 12M12 5L19 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+        <p class="ai-chat-disclaimer">Answers draw on MUBASA knowledge, election records, manifesto, and MUBS policy documents. Not legal advice.</p>
+      </form>
+    </div>
   </main>
 
-  <footer class="site-footer">
-    <div class="container footer-inner">
-      <div class="footer-brand">
-        <img src="assets/images/mubs-logo.png" alt="" width="40" height="40" aria-hidden="true">
-        <div>
-          <strong>Ssendi Samuel</strong>
-          <span>For Deputy Chairperson · MUBASA · Makerere University Business School</span>
-        </div>
-      </div>
-      <p class="footer-slogan">Results, No Rhetoric</p>
-      <p class="footer-copy">&copy; 2026 Ssendi Samuel Campaign · Enabling the Future</p>
-    </div>
-  </footer>
-
-  <script src="js/main.js"></script>
-  <script src="js/policy-chat.js"></script>
+  <script src="js/main.js?v=20260614"></script>
+  <script src="js/policy-chat.js?v=20260614"></script>
 </body>
 </html>
