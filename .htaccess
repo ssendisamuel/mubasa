@@ -1,0 +1,12 @@
+# Prevent stale HTML/JS after deploys (CWP/Apache)
+<IfModule mod_headers.c>
+  <FilesMatch "\.(html|htm|php)$">
+    Header set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
+  <FilesMatch "\.(js|css)$">
+    Header set Cache-Control "public, max-age=3600, must-revalidate"
+  </FilesMatch>
+  <FilesMatch "\.(png|jpg|jpeg|gif|webp|ico|pdf|woff2?)$">
+    Header set Cache-Control "public, max-age=604800"
+  </FilesMatch>
+</IfModule>
