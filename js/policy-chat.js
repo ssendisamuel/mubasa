@@ -28,6 +28,9 @@
     const suggestionsEl = document.getElementById("policy-chat-suggestions");
     const emptyState = document.getElementById("ai-chat-empty");
     const capabilityGrid = document.getElementById("ai-capability-grid");
+    const scrollContainer = isPageMode
+      ? document.querySelector(".ai-chat-messages-wrap")
+      : messages;
 
     if (!form || !input || !messages || (!isPageMode && (!widget || !toggle || !panel))) {
       return;
@@ -36,6 +39,7 @@
     let policiesCache = null;
     let knowledgeCache = null;
     let chatStarted = false;
+    let typingNode = null;
 
     function escapeHtml(str) {
       return str
@@ -85,15 +89,53 @@
       input.style.height = `${Math.min(input.scrollHeight, 160)}px`;
     }
 
+    function scrollToLatest(anchor) {
+      const scroller = scrollContainer || messages;
+      if (!scroller) return;
+
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if (anchor) {
+            anchor.scrollIntoView({ behavior: "smooth", block: "end" });
+          }
+          scroller.scrollTo({
+            top: scroller.scrollHeight,
+            behavior: "smooth",
+          });
+        });
+      });
+    }
+
     function showChatThread() {
       if (chatStarted) return;
       chatStarted = true;
       if (emptyState) emptyState.hidden = true;
       messages.hidden = false;
       if (suggestionsEl) suggestionsEl.hidden = false;
+      scrollToLatest(messages);
+    }
+
+    function showTyping() {
+      showChatThread();
+      if (typingNode) return typingNode;
+
+      typingNode = document.createElement("div");
+      typingNode.className = `chat-msg chat-msg-bot chat-msg-typing${isPageMode ? " chat-msg-page" : ""}`;
+      typingNode.innerHTML = '<div class="chat-msg-body"><p class="chat-typing"><span></span><span></span><span></span></p></div>';
+      messages.appendChild(typingNode);
+      scrollToLatest(typingNode);
+      return typingNode;
+    }
+
+    function hideTyping() {
+      if (typingNode?.parentNode) {
+        typingNode.parentNode.removeChild(typingNode);
+      }
+      typingNode = null;
     }
 
     function addMessage(text, role, source) {
+      hideTyping();
       showChatThread();
       const item = document.createElement("div");
       item.className = `chat-msg chat-msg-${role}${isPageMode ? " chat-msg-page" : ""}`;
@@ -105,7 +147,7 @@
         item.appendChild(meta);
       }
       messages.appendChild(item);
-      messages.scrollTop = messages.scrollHeight;
+      scrollToLatest(item);
     }
 
     function renderSuggestions(list) {
@@ -333,6 +375,7 @@
       addMessage(text, "user");
       input.value = "";
       resizeInput();
+      showTyping();
 
       const submitBtn = form.querySelector('button[type="submit"]');
       submitBtn.disabled = true;
@@ -368,6 +411,7 @@
           ASSISTANT_SOURCE
         );
       } finally {
+        hideTyping();
         submitBtn.disabled = false;
         input.focus();
       }
