@@ -41,7 +41,23 @@ The **Policy Hub** section explains how the manifesto is grounded in:
 - Universities and Other Tertiary Institutions Act, Cap 210
 - Public Service Standing Orders 2021
 
-The **Policy Assistant** chatbot searches the HR Manual text and curated policy summaries to answer questions about promotions, leave, grievances, science pay, the Strategic Plan, and manifesto alignment. It runs via `api/policy-chat.php` on the VPS (no external AI API required).
+The **Policy Assistant** uses Claude (when configured on the server) plus the HR Manual and policy summaries. Without an API key it falls back to keyword search.
+
+### Enable Claude on the VPS (server only)
+
+```bash
+cp api/config.example.php api/config.php
+nano api/config.php
+```
+
+Add your Anthropic API key from [console.anthropic.com](https://console.anthropic.com) — **never commit `config.php` or paste keys in chat**.
+
+```php
+'anthropic_api_key' => 'sk-ant-...',
+'anthropic_model' => 'claude-haiku-4-5-20251001',
+```
+
+Redeploy after saving. Haiku keeps costs low for a campaign site.
 
 Knowledge base files:
 

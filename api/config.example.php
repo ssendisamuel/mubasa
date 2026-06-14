@@ -9,4 +9,8 @@ return [
     'db_user' => 'ssendi_mubasa',
     'db_pass' => 'YOUR_DATABASE_PASSWORD',
     'notify_email' => 'sssendi@mubs.ac.ug',
+
+    // Policy Assistant — add on server only (never commit config.php)
+    'anthropic_api_key' => 'YOUR_ANTHROPIC_API_KEY',
+    'anthropic_model' => 'claude-haiku-4-5-20251001',
 ];
