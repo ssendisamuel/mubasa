@@ -713,6 +713,265 @@ button.btn:disabled {
   cursor: not-allowed;
 }
 
+.btn-sm {
+  padding: 0.65rem 1rem;
+  font-size: 0.88rem;
+}
+
+.manifesto-grounding a {
+  color: var(--yellow);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Policy Hub */
+.policies {
+  background: linear-gradient(180deg, #000814, var(--blue-deep));
+}
+
+.policy-intro {
+  margin-bottom: 2rem;
+  padding: 1.25rem 1.5rem;
+  border-left: 4px solid var(--yellow);
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+.policy-intro p {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.policy-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.25rem;
+}
+
+.policy-card {
+  padding: 1.5rem;
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.policy-tag {
+  margin: 0 0 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--yellow);
+}
+
+.policy-card h3 {
+  margin: 0 0 0.75rem;
+  font-size: 1.25rem;
+}
+
+.policy-card > p {
+  margin: 0 0 1rem;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.policy-topics {
+  margin: 0 0 1rem;
+  padding-left: 1.1rem;
+  color: var(--white);
+  font-size: 0.9rem;
+}
+
+.policy-topics li {
+  margin-bottom: 0.35rem;
+}
+
+.policy-align {
+  margin: 0 0 1rem !important;
+  font-size: 0.88rem !important;
+  color: rgba(255, 255, 255, 0.88) !important;
+}
+
+.policy-chat-promo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  margin-top: 2rem;
+  padding: 1.5rem;
+  border-radius: var(--radius);
+  background: linear-gradient(135deg, rgba(0, 51, 153, 0.55), rgba(0, 26, 87, 0.9));
+  border: 1px solid rgba(255, 204, 0, 0.25);
+}
+
+.policy-chat-promo h3 {
+  margin: 0 0 0.5rem;
+}
+
+.policy-chat-promo p {
+  margin: 0;
+  color: var(--text-muted);
+  max-width: 36rem;
+}
+
+/* Policy chat widget */
+.policy-chat-widget {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 150;
+}
+
+.policy-chat-toggle {
+  border: 0;
+  border-radius: 999px;
+  padding: 0.85rem 1.2rem;
+  background: var(--yellow);
+  color: var(--blue-deep);
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+}
+
+.policy-chat-panel {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 0.75rem);
+  width: min(380px, calc(100vw - 2rem));
+  height: min(520px, calc(100vh - 6rem));
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius);
+  background: var(--blue-deep);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.policy-chat-panel[hidden] {
+  display: none;
+}
+
+.policy-chat-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1rem 1rem 0.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.policy-chat-header strong {
+  display: block;
+  font-size: 0.95rem;
+}
+
+.policy-chat-header span {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.policy-chat-close {
+  border: 0;
+  background: transparent;
+  color: var(--white);
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+}
+
+.policy-chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.chat-msg {
+  max-width: 92%;
+  padding: 0.75rem 0.9rem;
+  border-radius: 12px;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.chat-msg p {
+  margin: 0;
+}
+
+.chat-msg-user {
+  align-self: flex-end;
+  background: var(--yellow);
+  color: var(--blue-deep);
+}
+
+.chat-msg-bot {
+  align-self: flex-start;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.chat-msg-source {
+  display: block;
+  margin-top: 0.45rem;
+  font-size: 0.72rem;
+  color: var(--yellow);
+}
+
+.policy-chat-suggestions {
+  display: flex;
+  gap: 0.45rem;
+  padding: 0 0.75rem 0.5rem;
+  overflow-x: auto;
+}
+
+.chat-suggestion {
+  flex: 0 0 auto;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.2);
+  color: var(--white);
+  border-radius: 999px;
+  padding: 0.35rem 0.65rem;
+  font: inherit;
+  font-size: 0.72rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.policy-chat-form {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.policy-chat-form input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.7rem 0.85rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--white);
+  font: inherit;
+}
+
+.policy-chat-form button {
+  border: 0;
+  border-radius: 10px;
+  padding: 0 1rem;
+  background: var(--yellow);
+  color: var(--blue-deep);
+  font-weight: 700;
+  cursor: pointer;
+}
+
 /* Contact */
 .contact {
   background: linear-gradient(180deg, var(--blue-mid), var(--blue-deep));
@@ -869,8 +1128,19 @@ a.contact-card:hover {
   .message-grid,
   .contact-grid,
   .feedback-grid,
-  .commitment-block {
+  .commitment-block,
+  .policy-grid {
     grid-template-columns: 1fr;
+  }
+
+  .policy-chat-promo {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .policy-chat-widget {
+    right: 0.75rem;
+    bottom: 0.75rem;
   }
 
   .pillars-grid {

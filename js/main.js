@@ -30,6 +30,12 @@
     { passive: true }
   );
 
+  document.getElementById("policy-chat-open")?.addEventListener("click", () => {
+    const toggle = document.getElementById("policy-chat-toggle");
+    const panel = document.getElementById("policy-chat-panel");
+    if (panel?.hidden && toggle) toggle.click();
+  });
+
   const form = document.getElementById("feedback-form");
   const status = document.getElementById("form-status");
 

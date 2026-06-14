@@ -1,0 +1,98 @@
+[
+  {
+    "id": "hr-manual",
+    "title": "MUBS HR Manual 2024",
+    "shortTitle": "HR Manual",
+    "year": "2024",
+    "summary": "The official Human Resource Manual for Makerere University Business School, amended in 2024. It governs recruitment, appointments, performance management, promotions, leave, discipline, grievance handling, welfare, and terms of service for academic and administrative staff.",
+    "download": "assets/documents/mubs-hr-manual-2024.pdf",
+    "pillars": ["unity", "welfare", "growth", "sustainability"],
+    "manifestoAlignment": "The manifesto is grounded in this manual. Pillar 01 (Unity) draws on grievance and representation provisions. Pillar 02 (Welfare) on terms, benefits, and working conditions. Pillar 03 (Growth) on promotions, performance appraisal, and study leave. Pillar 04 (Sustainability) on transparent processes and documented institutional practice.",
+    "keyTopics": [
+      "Recruitment and appointment procedures",
+      "Performance appraisal and management",
+      "Promotions and career progression",
+      "Study leave and bonding",
+      "Leave entitlements (annual, sick, maternity, etc.)",
+      "Disciplinary procedures",
+      "Grievance handling and workplace protection",
+      "Terms and conditions of service",
+      "Staff welfare and benefits"
+    ],
+    "keywords": ["hr manual", "promotion", "promotions", "leave", "study leave", "grievance", "grievances", "discipline", "disciplinary", "performance", "appraisal", "recruitment", "appointment", "welfare", "terms of service", "bonding", "harassment", "rights", "obligations", "salary scale"]
+  },
+  {
+    "id": "universities-act",
+    "title": "Universities and Other Tertiary Institutions Act, Cap 210",
+    "shortTitle": "Universities Act",
+    "year": "Cap 210",
+    "summary": "Uganda's principal law governing public universities and tertiary institutions. It establishes institutional governance structures (Council, Senate, Appointments Board), academic freedom frameworks, and the legal basis for staff associations and institutional autonomy.",
+    "download": null,
+    "pillars": ["unity", "sustainability"],
+    "manifestoAlignment": "Supports Pillar 01 by anchoring MUBASA's collective representation within the legal framework for staff associations. Supports Pillar 04 by defining how Council and management accountability structures operate.",
+    "keyTopics": [
+      "Institutional governance and Council powers",
+      "Senate and academic governance",
+      "Staff associations and representation",
+      "Appointments and disciplinary frameworks at law",
+      "Legal rights and duties of academic staff"
+    ],
+    "keywords": ["universities act", "cap 210", "cap 262", "council", "senate", "appointments board", "governance", "law", "tertiary institutions", "association", "legal framework"]
+  },
+  {
+    "id": "standing-orders",
+    "title": "Public Service Standing Orders 2021",
+    "shortTitle": "Standing Orders",
+    "year": "2021",
+    "summary": "Government-wide regulations on public service management covering conduct, discipline, leave, retirement, and administrative procedures. MUBS staff in public service categories are governed by these orders alongside the HR Manual.",
+    "download": null,
+    "pillars": ["unity", "welfare", "sustainability"],
+    "manifestoAlignment": "Underpins the manifesto commitment that every member knows their rights and obligations. Pillar 01 references these orders alongside the HR Manual. Pillar 02 welfare advocacy is framed within public service rules on remuneration and conditions.",
+    "keyTopics": [
+      "Public service conduct and ethics",
+      "Disciplinary procedures in public service",
+      "Leave and retirement provisions",
+      "Administrative accountability",
+      "Rights and obligations of public servants"
+    ],
+    "keywords": ["standing orders", "public service", "2021", "conduct", "discipline", "leave", "retirement", "public servant", "obligations", "ethics"]
+  },
+  {
+    "id": "faspu",
+    "title": "FASPU–PUNTSEF Collective Agreements",
+    "shortTitle": "FASPU Agreements",
+    "year": "Collective bargaining",
+    "summary": "Collective agreements negotiated by the Federation of Academic Staff Associations of Public Universities (FASPU) with government through PUNTSEF. They cover salary harmonisation, science pay, and national-level welfare improvements for academic staff in public universities including MUBS.",
+    "download": null,
+    "pillars": ["welfare", "growth"],
+    "manifestoAlignment": "Central to Pillar 02 (Welfare): salary harmonisation, science vs arts classification, RBS/NSSF remittance. Pillar 03 uses FASPU advocacy channels for fair promotions and national research support frameworks.",
+    "keyTopics": [
+      "Salary harmonisation for academic staff",
+      "Science pay and classification",
+      "National welfare negotiations",
+      "Collective bargaining for public university staff",
+      "RBS and pension-related provisions"
+    ],
+    "keywords": ["faspu", "puntsef", "collective agreement", "collective bargaining", "harmonisation", "harmonization", "salary enhancement", "science pay", "science scale", "arts scale", "rbs", "nssf", "union", "negotiation"]
+  },
+  {
+    "id": "strategic-plan",
+    "title": "MUBS Strategic Plan 2025–2030",
+    "shortTitle": "Strategic Plan",
+    "year": "2025–2030",
+    "summary": "MUBS's five-year roadmap titled \"Transforming into a Global Innovative Institution for Business and Management Education, Research and Training.\" It aligns the school with Uganda Vision 2040, National Development Plans, and SDGs. Key pillars include Human Capital (staff development, succession planning, digital transformation) and Sustainability.",
+    "download": null,
+    "externalLink": "https://mubs.ac.ug/about-us/strategy-and-projects-unit/",
+    "pillars": ["growth", "sustainability"],
+    "manifestoAlignment": "Pillar 03 (Growth) directly implements the Strategic Plan's Human Capital pillar — strategic staff development, succession planning, mentorship, and digital transformation including the proposed MUBASA member platform. Pillar 04 monitors management delivery of these commitments.",
+    "keyTopics": [
+      "Human Capital pillar — staff development and succession planning",
+      "Digital transformation and innovation",
+      "Research and training excellence",
+      "Infrastructure and partnerships",
+      "Alignment with Vision 2040 and NDP",
+      "Monitoring and evaluation of strategic objectives"
+    ],
+    "keywords": ["strategic plan", "2025", "2030", "human capital", "succession", "digital transformation", "vision 2040", "ndp", "staff development", "innovation", "sustainability pillar", "strategy"]
+  }
+]

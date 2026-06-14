@@ -31,6 +31,23 @@ For local PHP testing:
 php -S localhost:8080
 ```
 
+## Policy Hub & Policy Assistant
+
+The **Policy Hub** section explains how the manifesto is grounded in:
+
+- MUBS HR Manual 2024 (downloadable on site)
+- MUBS Strategic Plan 2025–2030
+- FASPU–PUNTSEF Collective Agreements
+- Universities and Other Tertiary Institutions Act, Cap 210
+- Public Service Standing Orders 2021
+
+The **Policy Assistant** chatbot searches the HR Manual text and curated policy summaries to answer questions about promotions, leave, grievances, science pay, the Strategic Plan, and manifesto alignment. It runs via `api/policy-chat.php` on the VPS (no external AI API required).
+
+Knowledge base files:
+
+- `data/policies-index.json` — curated summaries and manifesto alignment
+- `data/hr-manual-chunks.json` — searchable HR Manual excerpts
+
 ## Member feedback form
 
 The **Your Voice** section lets MUBASA members share what they expect from the manifesto. Submissions are stored in MySQL and optionally emailed to you.
