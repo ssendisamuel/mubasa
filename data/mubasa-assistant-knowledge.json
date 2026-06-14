@@ -1,0 +1,111 @@
+{
+  "assistantName": "MUBASA AI Assistant",
+  "developedBy": "Ssendi Samuel",
+  "aboutMubasa": "MUBASA is the Makerere University Business School Academic Staff Association — the representative body for academic and administrative staff at MUBS. Members include Teaching Assistants, Assistant Lecturers, Lecturers, Senior Lecturers, Associate Professors, and Professors across Main Campus (Nakawa), Arua, Mbarara, Jinja, and Mbale.",
+  "aboutMubs": "Makerere University Business School (MUBS) is a constituent college of Makerere University. The school motto is Enabling the Future. MUBASA exists to represent staff interests in welfare, governance, promotions, working conditions, and collective advocacy with management and through FASPU at national level.",
+  "campaignCandidate": {
+    "name": "Ssendi Samuel",
+    "position": "Deputy Chairperson",
+    "term": "2026–2028",
+    "slogan": "Results, No Rhetoric",
+    "summary": "Ssendi Samuel is an academic and researcher at MUBS applying machine learning to public health. He brings policy knowledge, institutional governance experience, and a practical delivery-focused approach. His manifesto is grounded in the MUBS HR Manual 2024, Universities Act Cap 210, Public Service Standing Orders 2021, FASPU-PUNTSEF Collective Agreements, and the MUBS Strategic Plan 2025–2030."
+  },
+  "manifestoCommitment": "I am not here to reinvent MUBASA. I am here to make it work better for every member. The policies are in place. The strategic plan is on the table. The management has shown willingness to engage. What is needed now is an association that follows through, keeps records, and reports back honestly. That is the job. I am ready for it. I humbly ask for your vote. — Ssendi Samuel",
+  "manifestoPillars": [
+    {
+      "id": "unity",
+      "title": "Unity",
+      "tagline": "One voice. Every rank. Every faculty. Every campus.",
+      "intro": "MUBASA is strongest when its members move as one body — every faculty, every rank, every campus (Main, Arua, Mbarara, Jinja, Mbale). Teaching Assistants through Professors, all represented equally.",
+      "commitments": [
+        "Strengthen MUBASA's formal engagement with management for collective, documented staff positions.",
+        "Represent members individually on promotion, classification, and workplace issues.",
+        "Continue FASPU engagement for national-level advocacy.",
+        "Extend communication and activities to regional campuses.",
+        "Ensure every member knows their rights under the HR Manual, Universities Act, and Standing Orders.",
+        "Stand behind members facing intimidation or harassment through existing grievance procedures."
+      ]
+    },
+    {
+      "id": "welfare",
+      "title": "Welfare",
+      "tagline": "Real healthcare. Better working conditions. Science Pay.",
+      "intro": "Progress on staff welfare deserves acknowledgement — salary harmonisation in 2024, RBS reinstated, medical insurance announced. MUBASA must push gains further and address remaining gaps.",
+      "commitments": [
+        "Push salary harmonisation for mid-level staff through FASPU.",
+        "Correct science vs arts salary classification anomaly at MUBS.",
+        "Ensure timely RBS and NSSF remittance.",
+        "Fast-track operationalisation of medical insurance for staff and dependants.",
+        "Support Health Centre digitisation and mental health in the welfare package.",
+        "Improve staff transport, office space, and internet infrastructure."
+      ]
+    },
+    {
+      "id": "growth",
+      "title": "Growth",
+      "tagline": "Fair promotions. Research support. Professional development.",
+      "intro": "Staff growth is tied to MUBS Strategic Plan 2025–2030 Human Capital pillar. MUBASA must ensure that commitment becomes real opportunity for every member.",
+      "commitments": [
+        "Published annual promotions calendar with clear timelines.",
+        "Transparent promotion process per HR Manual criteria.",
+        "Equitable research funding and structured mentorship across faculties.",
+        "Transparent study leave and fair bonding terms.",
+        "A digital MUBASA member platform for documents, welfare info, and updates."
+      ]
+    },
+    {
+      "id": "sustainability",
+      "title": "Sustainability",
+      "tagline": "An organised, accountable association that delivers.",
+      "intro": "MUBASA will outlast this term. Sustainability means a stronger, better organised, more trusted association for future members.",
+      "commitments": [
+        "Consistent general meetings with minutes published within two weeks.",
+        "Member feedback channel for all ranks.",
+        "Documented handover for incoming executives.",
+        "Transparent financial reporting at AGMs.",
+        "Partner in delivering MUBS Strategic Plan 2025–2030 Human Capital pillar."
+      ]
+    }
+  ],
+  "electionRoadmap": [
+    { "step": 1, "activity": "Call for nomination", "dates": "8–11 June 2026" },
+    { "step": 2, "activity": "Declaring of Nominated Candidates", "dates": "12 June 2026" },
+    { "step": 3, "activity": "Official campaigns", "dates": "From 12 June 2026" },
+    { "step": 4, "activity": "MUBASA Debate (online and physical)", "dates": "22 June 2026" },
+    { "step": 5, "activity": "Closing of campaigns", "dates": "22 June 2026" },
+    { "step": 6, "activity": "Voting for candidates", "dates": "23 June 2026" },
+    { "step": 7, "activity": "Swearing-in & Handover", "dates": "26 June 2026" }
+  ],
+  "contestedCandidates": {
+    "Chairperson": ["Mr. Arinda Albert", "Mr. Ouma Ibrahim"],
+    "Deputy Chairperson": ["Mr. Birungi Victor", "Mr. Ssendi Samuel"],
+    "Treasurer": ["Ms. Lakot Lucy", "Ms. Naigaga Sharon"],
+    "Chairperson, Public Relations and Welfare Committee": ["Ayesigye Justus", "Mugabe Robert"],
+    "Committee Members, Public Relations and Welfare Committee": [
+      "Arinawe Calvin Kato",
+      "Christine Ayibo",
+      "Leonard Kiplangat",
+      "Ongom Derrick Nicholas"
+    ]
+  },
+  "unopposedCandidates": [
+    { "position": "General Secretary", "name": "Ms. Evalyne Sarah Ikisa" },
+    { "position": "Chairperson, Planning, Academic, and Research Committee", "name": "Mr. Aheisibwe Joshua" },
+    { "position": "Committee members, Planning, Academic, and Research Committee", "name": "Mr. Amwine Louis, Mr. Opwanya Robert, Mr. Orichom Geresem" },
+    { "position": "MUBASA Representative to the Academic Board", "name": "Mr. Lambert Ayebare" },
+    { "position": "MUBASA Representative to Staff Training and Development Committee", "name": "Mr. Tumwesige Joshua" },
+    { "position": "Representative — Arua Campus", "name": "Ms. Isaburu Viola" },
+    { "position": "Representative — Jinja Campus", "name": "Ms. Atuhairwe Janepher" },
+    { "position": "Representative — Mbale", "name": "Mr. Kamba Raymond" },
+    { "position": "Representative — Mbarara", "name": "Mr. Beinomugisha Anthony" }
+  ],
+  "returningOfficer": "Sebi Hussen, Returning Officer — MUBASA",
+  "suggestedQuestions": [
+    "What is Ssendi Samuel's manifesto for Deputy Chairperson?",
+    "When is MUBASA voting in 2026?",
+    "Who are the Deputy Chairperson candidates?",
+    "What does the HR Manual say about promotions?",
+    "What is FASPU's role in salary harmonisation?",
+    "What are the four manifesto pillars?"
+  ]
+}

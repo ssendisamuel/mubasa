@@ -1,6 +1,12 @@
 (function () {
+  const ASSISTANT_SOURCE = "AI Model Developed and Trained by Ssendi";
+
   function initPolicyChat() {
+    const pageChat = document.getElementById("ai-assistant-chat");
     const widget = document.getElementById("policy-chat-widget");
+    const isPageMode = Boolean(pageChat);
+
+    const root = pageChat || widget;
     const toggle = document.getElementById("policy-chat-toggle");
     const panel = document.getElementById("policy-chat-panel");
     const closeBtn = document.getElementById("policy-chat-close");
@@ -9,20 +15,21 @@
     const messages = document.getElementById("policy-chat-messages");
     const suggestionsEl = document.getElementById("policy-chat-suggestions");
 
-    if (!widget || !toggle || !panel || !form || !input || !messages) {
+    if (!form || !input || !messages || (!isPageMode && (!widget || !toggle || !panel))) {
       return;
     }
 
     let policiesCache = null;
+    let knowledgeCache = null;
 
     const intro =
-      "Hello! I am the MUBASA Policy Assistant. Ask me about the MUBS HR Manual, Strategic Plan, Universities Act, Public Service Standing Orders, FASPU agreements, and how they align with Ssendi Samuel's manifesto.";
+      "Hello! I am the MUBASA AI Assistant. I know about MUBASA and MUBS, the 2026 executive election roadmap, nominated candidates, Ssendi Samuel's manifesto, and MUBS policy documents.\n\nAsk about voting dates, candidates, manifesto pillars, promotions, leave, science pay, or staff welfare.";
 
     const defaultSuggestions = [
+      "What is Ssendi Samuel's manifesto for Deputy Chairperson?",
+      "When is MUBASA voting in 2026?",
+      "Who are the Deputy Chairperson candidates?",
       "What does the HR Manual say about promotions?",
-      "How does the Strategic Plan support staff growth?",
-      "What is FASPU's role in salary harmonisation?",
-      "What are my grievance rights at MUBS?",
     ];
 
     function escapeHtml(str) {
@@ -64,29 +71,34 @@
     }
 
     function isOpen() {
-      return panel.classList.contains("is-open");
+      return panel?.classList.contains("is-open");
     }
 
     function openPanel() {
+      if (isPageMode) return;
       panel.classList.add("is-open");
       panel.removeAttribute("hidden");
       widget.classList.add("is-open");
       toggle.setAttribute("aria-expanded", "true");
       document.body.classList.add("policy-chat-open");
       input.focus({ preventScroll: true });
-
-      if (messages.childElementCount === 0) {
-        addMessage(intro, "bot", "Policy Assistant");
-        renderSuggestions(defaultSuggestions);
-      }
+      bootChat();
     }
 
     function closePanel() {
+      if (isPageMode) return;
       panel.classList.remove("is-open");
       panel.setAttribute("hidden", "");
       widget.classList.remove("is-open");
       toggle.setAttribute("aria-expanded", "false");
       document.body.classList.remove("policy-chat-open");
+    }
+
+    function bootChat() {
+      if (messages.childElementCount === 0) {
+        addMessage(intro, "bot", ASSISTANT_SOURCE);
+        renderSuggestions(defaultSuggestions);
+      }
     }
 
     function tokenize(text) {
@@ -133,17 +145,54 @@
       return policiesCache;
     }
 
+    async function loadKnowledge() {
+      if (knowledgeCache) return knowledgeCache;
+      try {
+        const response = await fetch("data/mubasa-assistant-knowledge.json");
+        knowledgeCache = await response.json();
+      } catch {
+        knowledgeCache = {};
+      }
+      return knowledgeCache;
+    }
+
     async function answerLocally(query) {
       if (isGreeting(query)) {
         return {
+          answer: intro,
+          source: ASSISTANT_SOURCE,
+        };
+      }
+
+      const knowledge = await loadKnowledge();
+      const tokens = tokenize(query);
+      const knowledgeBlob = JSON.stringify(knowledge).toLowerCase();
+      const electionTerms = ["election", "vote", "voting", "campaign", "debate", "nomination", "handover", "roadmap", "candidate", "manifesto", "mubasa", "ssendi", "deputy"];
+      const knowledgeScore = tokens.reduce((score, token) => {
+        let next = wordMatch(knowledgeBlob, token) ? score + 2 : score;
+        if (electionTerms.includes(token)) next += 3;
+        return next;
+      }, 0);
+
+      if (knowledgeScore >= 3) {
+        const candidate = knowledge.campaignCandidate || {};
+        const roadmap = (knowledge.electionRoadmap || [])
+          .map((step) => `${step.activity} (${step.dates})`)
+          .join("\n");
+        const deputy = (knowledge.contestedCandidates || {})["Deputy Chairperson"] || [];
+
+        return {
           answer:
-            "Hello! I am the MUBASA Policy Assistant. Ask me about promotions, leave, grievances, science pay, the Strategic Plan, or FASPU agreements.",
-          source: "Policy Assistant · offline mode",
+            `${candidate.name || "Ssendi Samuel"} is running for ${candidate.position || "Deputy Chairperson"} with the slogan "${candidate.slogan || "Results, No Rhetoric"}".\n\n` +
+            `2026 election roadmap:\n${roadmap}\n\n` +
+            `Deputy Chairperson candidates: ${deputy.join(" and ")}.\n\n` +
+            "Ask a specific question about manifesto pillars, policies, or any position for more detail.",
+          source: ASSISTANT_SOURCE,
+          suggestions: knowledge.suggestedQuestions || defaultSuggestions,
         };
       }
 
       const policies = await loadPolicies();
-      const tokens = tokenize(query);
       let best = null;
       let bestScore = 0;
 
@@ -165,33 +214,37 @@
       if (!best || bestScore < 2) {
         return {
           answer:
-            "I could not find a precise match. Try asking about promotions, leave, grievances, science pay, FASPU, or the Strategic Plan Human Capital pillar.",
-          source: "Policy Assistant",
+            "I could not find a precise match. Try asking about the 2026 election, candidates, manifesto pillars, promotions, leave, science pay, FASPU, or the Strategic Plan.",
+          source: ASSISTANT_SOURCE,
           suggestions: defaultSuggestions,
         };
       }
 
       return {
         answer: `${best.summary}\n\nManifesto alignment: ${best.manifestoAlignment}`,
-        source: best.title,
+        source: `${best.title} · ${ASSISTANT_SOURCE}`,
         suggestions: defaultSuggestions,
       };
     }
 
-    toggle.addEventListener("click", (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      if (isOpen()) closePanel();
-      else openPanel();
-    });
+    if (!isPageMode) {
+      toggle.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        if (isOpen()) closePanel();
+        else openPanel();
+      });
 
-    closeBtn?.addEventListener("click", closePanel);
+      closeBtn?.addEventListener("click", closePanel);
 
-    document.addEventListener("keydown", (event) => {
-      if (event.key === "Escape" && isOpen()) closePanel();
-    });
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && isOpen()) closePanel();
+      });
 
-    window.openPolicyChat = openPanel;
+      window.openPolicyChat = openPanel;
+    } else {
+      bootChat();
+    }
 
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
@@ -213,9 +266,7 @@
         if (response.ok) {
           const result = await response.json();
           if (result.ok) {
-            const source = result.ai
-              ? result.source || "Policy Assistant · Claude AI"
-              : result.source || "Policy Assistant · document search";
+            const source = result.source || ASSISTANT_SOURCE;
             addMessage(result.answer, "bot", source);
             renderSuggestions(result.suggestions || defaultSuggestions);
             submitBtn.disabled = false;
@@ -229,12 +280,12 @@
       try {
         const local = await answerLocally(text);
         addMessage(local.answer, "bot", local.source);
-        renderSuggestions(local.suggestions);
+        renderSuggestions(local.suggestions || defaultSuggestions);
       } catch {
         addMessage(
-          "Sorry, I could not load policy data right now. Please browse the Policy Hub section on this page or download the HR Manual.",
+          "Sorry, I could not load data right now. Please browse the manifesto and Policy Hub on the main site.",
           "bot",
-          "Policy Assistant"
+          ASSISTANT_SOURCE
         );
       } finally {
         submitBtn.disabled = false;

@@ -13,5 +13,6 @@ echo json_encode([
     'model' => trim($config['anthropic_model'] ?? '') ?: 'claude-3-5-haiku-latest',
     'php_curl' => function_exists('curl_init'),
     'hr_manual_indexed' => file_exists(dirname(__DIR__) . '/data/hr-manual-chunks.json'),
-    'hint' => 'Send a chat message and check the JSON response for "ai": true and source "Claude AI".',
+    'knowledge_base' => file_exists(dirname(__DIR__) . '/data/mubasa-assistant-knowledge.json'),
+    'hint' => 'Send a chat message and check the JSON response for "ai": true and source "AI Model Developed and Trained by Ssendi".',
 ]);

@@ -31,7 +31,7 @@ For local PHP testing:
 php -S localhost:8080
 ```
 
-## Policy Hub & Policy Assistant
+## Policy Hub & MUBASA AI Assistant
 
 The **Policy Hub** section explains how the manifesto is grounded in:
 
@@ -41,7 +41,9 @@ The **Policy Hub** section explains how the manifesto is grounded in:
 - Universities and Other Tertiary Institutions Act, Cap 210
 - Public Service Standing Orders 2021
 
-The **Policy Assistant** uses Claude (when configured on the server) plus the HR Manual and policy summaries. Without an API key it falls back to keyword search.
+The **MUBASA AI Assistant** (`ai-assistant.html` and the floating chat widget) is trained with MUBASA context, the 2026 election roadmap, nominated candidates, Ssendi Samuel's manifesto, and policy documents. It uses Claude when configured on the server; without an API key it falls back to the built-in knowledge base and keyword search.
+
+Knowledge data lives in `data/mubasa-assistant-knowledge.json`.
 
 ### Enable Claude on the VPS (server only)
 

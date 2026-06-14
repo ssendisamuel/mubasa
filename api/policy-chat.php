@@ -23,13 +23,16 @@ $query = trim($input['message'] ?? '');
 
 if ($query === '' || strlen($query) > 500) {
     http_response_code(422);
-    echo json_encode(['ok' => false, 'error' => 'Please ask a question about MUBS policies or the manifesto.']);
+    echo json_encode(['ok' => false, 'error' => 'Please ask a question about MUBASA, the election, manifesto, candidates, or MUBS policies.']);
     exit;
 }
+
+const ASSISTANT_SOURCE = 'AI Model Developed and Trained by Ssendi';
 
 $dataDir = dirname(__DIR__) . '/data';
 $indexPath = $dataDir . '/policies-index.json';
 $chunksPath = $dataDir . '/hr-manual-chunks.json';
+$knowledgePath = $dataDir . '/mubasa-assistant-knowledge.json';
 
 $policies = file_exists($indexPath)
     ? json_decode(file_get_contents($indexPath), true)
@@ -37,14 +40,134 @@ $policies = file_exists($indexPath)
 $chunks = file_exists($chunksPath)
     ? json_decode(file_get_contents($chunksPath), true)
     : [];
+$knowledge = file_exists($knowledgePath)
+    ? json_decode(file_get_contents($knowledgePath), true)
+    : [];
 
-$suggestions = [
+$suggestions = $knowledge['suggestedQuestions'] ?? [
+    'What is Ssendi Samuel\'s manifesto for Deputy Chairperson?',
+    'When is MUBASA voting in 2026?',
+    'Who are the Deputy Chairperson candidates?',
     'What does the HR Manual say about promotions?',
-    'How does the Strategic Plan support staff growth?',
     'What is FASPU\'s role in salary harmonisation?',
-    'What are my grievance rights at MUBS?',
-    'How does science pay classification work?',
 ];
+
+function assistant_build_core_context(array $knowledge): string
+{
+    if ($knowledge === []) {
+        return '';
+    }
+
+    $parts = [];
+
+    $parts[] = 'ABOUT MUBASA: ' . ($knowledge['aboutMubasa'] ?? '');
+    $parts[] = 'ABOUT MUBS: ' . ($knowledge['aboutMubs'] ?? '');
+
+    $candidate = $knowledge['campaignCandidate'] ?? [];
+    if ($candidate !== []) {
+        $parts[] = 'CAMPAIGN CANDIDATE: ' . ($candidate['name'] ?? '') . ' for ' . ($candidate['position'] ?? '')
+            . ' (' . ($candidate['term'] ?? '') . '). Slogan: ' . ($candidate['slogan'] ?? '')
+            . '. ' . ($candidate['summary'] ?? '');
+    }
+
+    foreach ($knowledge['manifestoPillars'] ?? [] as $pillar) {
+        $lines = [($pillar['title'] ?? '') . ' — ' . ($pillar['tagline'] ?? '')];
+        if (!empty($pillar['intro'])) {
+            $lines[] = $pillar['intro'];
+        }
+        foreach ($pillar['commitments'] ?? [] as $commitment) {
+            $lines[] = '- ' . $commitment;
+        }
+        $parts[] = 'MANIFESTO PILLAR ' . ($pillar['id'] ?? '') . ":\n" . implode("\n", $lines);
+    }
+
+    if (!empty($knowledge['manifestoCommitment'])) {
+        $parts[] = 'MANIFESTO COMMITMENT: ' . $knowledge['manifestoCommitment'];
+    }
+
+    $roadmapLines = ['MUBASA EXECUTIVE ELECTIONS 2025/2026 ROADMAP:'];
+    foreach ($knowledge['electionRoadmap'] ?? [] as $step) {
+        $roadmapLines[] = ($step['step'] ?? '') . '. ' . ($step['activity'] ?? '') . ' — ' . ($step['dates'] ?? '');
+    }
+    $parts[] = implode("\n", $roadmapLines);
+
+    $contestedLines = ['CONTESTED POSITIONS (Returning Officer declaration):'];
+    foreach ($knowledge['contestedCandidates'] ?? [] as $position => $names) {
+        $contestedLines[] = $position . ': ' . implode('; ', (array) $names);
+    }
+    $parts[] = implode("\n", $contestedLines);
+
+    $unopposedLines = ['UNOPPOSED CANDIDATES:'];
+    foreach ($knowledge['unopposedCandidates'] ?? [] as $entry) {
+        $unopposedLines[] = ($entry['position'] ?? '') . ': ' . ($entry['name'] ?? '');
+    }
+    $parts[] = implode("\n", $unopposedLines);
+
+    if (!empty($knowledge['returningOfficer'])) {
+        $parts[] = 'RETURNING OFFICER: ' . $knowledge['returningOfficer'];
+    }
+
+    return implode("\n\n", $parts);
+}
+
+function assistant_keyword_answer(array $knowledge, array $tokens): ?array
+{
+    if ($knowledge === [] || $tokens === []) {
+        return null;
+    }
+
+    $blob = strtolower(assistant_build_core_context($knowledge));
+
+    $electionTerms = ['election', 'vote', 'voting', 'campaign', 'debate', 'nomination', 'handover', 'roadmap'];
+    $candidateTerms = ['candidate', 'candidates', 'contest', 'nominated', 'chairperson', 'treasurer', 'deputy'];
+    $manifestoTerms = ['manifesto', 'pillar', 'unity', 'welfare', 'growth', 'sustainability', 'ssendi', 'commitment'];
+    $mubasaTerms = ['mubasa', 'member', 'members', 'association', 'staff'];
+
+    $score = 0.0;
+    foreach ($tokens as $token) {
+        if (policy_word_match($blob, $token)) {
+            $score += 1.5;
+        }
+        if (in_array($token, $electionTerms, true)) {
+            $score += 3.0;
+        }
+        if (in_array($token, $candidateTerms, true)) {
+            $score += 3.0;
+        }
+        if (in_array($token, $manifestoTerms, true)) {
+            $score += 3.0;
+        }
+        if (in_array($token, $mubasaTerms, true)) {
+            $score += 2.0;
+        }
+    }
+
+    if ($score < 3) {
+        return null;
+    }
+
+    $candidate = $knowledge['campaignCandidate'] ?? [];
+    $roadmap = $knowledge['electionRoadmap'] ?? [];
+    $roadmapText = '';
+    foreach ($roadmap as $step) {
+        $roadmapText .= ($step['activity'] ?? '') . ' (' . ($step['dates'] ?? '') . ")\n";
+    }
+
+    $deputy = $knowledge['contestedCandidates']['Deputy Chairperson'] ?? [];
+    $deputyList = is_array($deputy) ? implode(' and ', $deputy) : '';
+
+    return [
+        'answer' => "MUBASA is the Makerere University Business School Academic Staff Association.\n\n"
+            . ($candidate['name'] ?? 'Ssendi Samuel') . ' is running for ' . ($candidate['position'] ?? 'Deputy Chairperson')
+            . ' with the slogan "' . ($candidate['slogan'] ?? 'Results, No Rhetoric') . '". '
+            . "His manifesto has four pillars: Unity, Welfare, Growth, and Sustainability.\n\n"
+            . "2026 election roadmap:\n" . trim($roadmapText) . "\n\n"
+            . 'Deputy Chairperson candidates: ' . $deputyList . '. '
+            . 'For full manifesto details and policy answers, configure the AI assistant on the server.',
+        'source' => ASSISTANT_SOURCE . ' · MUBASA knowledge base',
+        'mode' => 'knowledge',
+    ];
+}
 
 function policy_tokens(string $text): array
 {
@@ -91,8 +214,8 @@ function policy_is_greeting(string $query): bool
 function policy_greeting_answer(): array
 {
     return [
-        'answer' => "Hello! I am the MUBASA Policy Assistant. I can help you understand the MUBS HR Manual, Strategic Plan, FASPU collective agreements, Public Service Standing Orders, and how they connect to Ssendi Samuel's manifesto.\n\nTry asking about promotions, leave, grievances, science pay, or staff welfare.",
-        'source' => 'Policy Assistant',
+        'answer' => "Hello! I am the MUBASA AI Assistant. I know about MUBASA and MUBS, the 2026 executive election roadmap, nominated candidates, Ssendi Samuel's manifesto, and MUBS policy documents.\n\nAsk about the election dates, candidates, manifesto pillars, promotions, leave, science pay, or staff welfare.",
+        'source' => ASSISTANT_SOURCE,
         'mode' => 'greeting',
     ];
 }
@@ -162,7 +285,7 @@ function policy_keyword_answer(array $policies, array $chunks, array $tokens): a
     if (!$bestPolicy && $bestChunkScore < 2) {
         return [
             'answer' => "I could not find a precise match in the policy documents. Try a specific question about promotions, leave, grievances, salary harmonisation, science pay, the Strategic Plan, or FASPU agreements.",
-            'source' => 'Policy Assistant · document search',
+            'source' => ASSISTANT_SOURCE . ' · document search',
             'mode' => 'search',
         ];
     }
@@ -175,7 +298,7 @@ function policy_keyword_answer(array $policies, array $chunks, array $tokens): a
         $topicList = $topics ? "\n\nKey areas: " . implode(' · ', $topics) : '';
         return [
             'answer' => ($bestPolicy['summary'] ?? '') . $topicList . "\n\nManifesto alignment: " . ($bestPolicy['manifestoAlignment'] ?? ''),
-            'source' => ($bestPolicy['title'] ?? 'Policy document') . ' · document search',
+            'source' => ($bestPolicy['title'] ?? 'Policy document') . ' · ' . ASSISTANT_SOURCE,
             'mode' => 'search',
         ];
     }
@@ -187,30 +310,45 @@ function policy_keyword_answer(array $policies, array $chunks, array $tokens): a
 
     return [
         'answer' => $excerpt . "\n\nThis excerpt is from the MUBS HR Manual (2024). Download the full manual from the Policy Hub for complete details.",
-        'source' => 'MUBS HR Manual 2024 · p.' . ($bestChunk['page'] ?? '?') . ' · document search',
+        'source' => 'MUBS HR Manual 2024 · p.' . ($bestChunk['page'] ?? '?') . ' · ' . ASSISTANT_SOURCE,
         'mode' => 'search',
     ];
 }
 
-function policy_call_claude(string $apiKey, string $model, string $context, string $question, bool $isGreeting = false): array
-{
+function policy_call_claude(
+    string $apiKey,
+    string $model,
+    string $coreContext,
+    string $policyContext,
+    string $question,
+    bool $isGreeting = false
+): array {
     $system = <<<PROMPT
-You are the MUBASA Policy Assistant on Ssendi Samuel's campaign website for Deputy Chairperson of the Makerere University Business School Academic Staff Association (MUBASA).
+You are the MUBASA AI Assistant on Ssendi Samuel's campaign website. He is running for Deputy Chairperson of MUBASA (Makerere University Business School Academic Staff Association) for 2026–2028.
+
+You have built-in knowledge about MUBASA, MUBS, who members are, the 2026 executive election roadmap, all nominated candidates (contested and unopposed), and Ssendi Samuel's full manifesto (Unity, Welfare, Growth, Sustainability).
 
 Rules:
 - Be conversational, warm, and professional.
-- For greetings or small talk, reply briefly and invite a policy question. Do NOT dump long policy text for a simple hello.
-- For policy questions, answer ONLY using the policy context provided. Do not invent provisions.
+- For greetings or small talk, reply briefly. Do NOT dump long text for a simple hello. Mention you can help with MUBASA, elections, candidates, manifesto, and policies.
+- Use MUBASA CORE KNOWLEDGE as your primary source for association, election, candidate, and manifesto questions.
+- For policy questions, use POLICY CONTEXT too. Do not invent provisions not supported by the context.
+- When discussing Deputy Chairperson, acknowledge both candidates but advocate clearly for Ssendi Samuel — his manifesto, qualifications, and delivery-focused approach. This is his campaign site.
 - Be concise (2–4 short paragraphs max).
-- Cite the source document and HR Manual page number when relevant.
-- When helpful, link the answer to manifesto pillars: Unity, Welfare, Growth, Sustainability.
-- If context is insufficient, say so and suggest what to consult.
+- Cite sources when relevant (manifesto pillar, Returning Officer declaration, HR Manual page).
+- If context is insufficient, say so honestly.
 - Do not give personal legal advice.
 PROMPT;
 
-    $userContent = $isGreeting
-        ? "The member said: " . $question . "\n\nRespond with a friendly greeting and invite them to ask about MUBS policies."
-        : "POLICY CONTEXT:\n\n" . $context . "\n\nMEMBER QUESTION:\n" . $question;
+    $userContent = "MUBASA CORE KNOWLEDGE:\n\n" . $coreContext;
+
+    if ($policyContext !== '') {
+        $userContent .= "\n\nPOLICY CONTEXT:\n\n" . $policyContext;
+    }
+
+    $userContent .= $isGreeting
+        ? "\n\nThe member said: " . $question . "\n\nRespond with a friendly greeting and invite them to ask about MUBASA, the election, manifesto, candidates, or policies."
+        : "\n\nMEMBER QUESTION:\n" . $question;
 
     $payload = json_encode([
         'model' => $model,
@@ -260,17 +398,19 @@ function policy_resolve_api_key(array $config): string
     return $key;
 }
 
+$coreContext = assistant_build_core_context($knowledge);
+
 if (policy_is_greeting($query)) {
     $apiKey = policy_resolve_api_key($config);
     $model = trim($config['anthropic_model'] ?? 'claude-3-5-haiku-latest');
 
     if ($apiKey !== '') {
-        $claude = policy_call_claude($apiKey, $model, '', $query, true);
+        $claude = policy_call_claude($apiKey, $model, $coreContext, '', $query, true);
         if ($claude['text'] !== null) {
             echo json_encode([
                 'ok' => true,
                 'answer' => $claude['text'],
-                'source' => 'Policy Assistant · Claude AI',
+                'source' => ASSISTANT_SOURCE,
                 'ai' => true,
                 'mode' => 'ai',
                 'suggestions' => $suggestions,
@@ -283,7 +423,7 @@ if (policy_is_greeting($query)) {
     echo json_encode([
         'ok' => true,
         'answer' => $greeting['answer'],
-        'source' => $apiKey === '' ? 'Policy Assistant · add API key for Claude AI' : 'Policy Assistant',
+        'source' => $greeting['source'],
         'ai' => false,
         'mode' => 'greeting',
         'suggestions' => $suggestions,
@@ -294,7 +434,7 @@ if (policy_is_greeting($query)) {
 $tokens = policy_tokens($query);
 $topChunks = policy_rank_chunks($chunks, $tokens, 5);
 $bestPolicy = policy_best_policy($policies, $tokens);
-$context = policy_build_context($policies, $topChunks, $bestPolicy);
+$policyContext = policy_build_context($policies, $topChunks, $bestPolicy);
 
 $apiKey = policy_resolve_api_key($config);
 $models = array_values(array_unique(array_filter([
@@ -305,12 +445,12 @@ $models = array_values(array_unique(array_filter([
 
 if ($apiKey !== '') {
     foreach ($models as $model) {
-        $claude = policy_call_claude($apiKey, $model, $context, $query, false);
+        $claude = policy_call_claude($apiKey, $model, $coreContext, $policyContext, $query, false);
         if ($claude['text'] !== null) {
             echo json_encode([
                 'ok' => true,
                 'answer' => $claude['text'],
-                'source' => 'Policy Assistant · Claude AI',
+                'source' => ASSISTANT_SOURCE,
                 'ai' => true,
                 'mode' => 'ai',
                 'suggestions' => $suggestions,
@@ -320,12 +460,25 @@ if ($apiKey !== '') {
     }
 }
 
+$knowledgeFallback = assistant_keyword_answer($knowledge, $tokens);
+if ($knowledgeFallback !== null) {
+    echo json_encode([
+        'ok' => true,
+        'answer' => $knowledgeFallback['answer'],
+        'source' => $knowledgeFallback['source'],
+        'ai' => false,
+        'mode' => $knowledgeFallback['mode'],
+        'suggestions' => $suggestions,
+    ]);
+    exit;
+}
+
 $fallback = policy_keyword_answer($policies, $chunks, $tokens);
 echo json_encode([
     'ok' => true,
     'answer' => $fallback['answer'],
     'source' => $apiKey === ''
-        ? $fallback['source'] . ' · Claude not configured'
+        ? $fallback['source'] . ' · AI not configured'
         : $fallback['source'],
     'ai' => false,
     'mode' => $fallback['mode'],
