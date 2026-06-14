@@ -107,6 +107,12 @@ function assistant_build_core_context(array $knowledge): string
         $parts[] = 'RETURNING OFFICER: ' . $knowledge['returningOfficer'];
     }
 
+    $leadership = $knowledge['mubsLeadership'] ?? [];
+    if ($leadership !== []) {
+        $parts[] = 'MUBS LEADERSHIP: Principal — ' . ($leadership['principal'] ?? '')
+            . '. ' . ($leadership['note'] ?? '');
+    }
+
     return implode("\n\n", $parts);
 }
 
@@ -211,7 +217,10 @@ function policy_is_greeting(string $query): bool
     if (preg_match('/^(hi|hello|hey|good\s+(morning|afternoon|evening)|greetings|howdy|thanks|thank\s+you|ok|okay)[!.?\s]*$/u', $q)) {
         return true;
     }
-    return (bool) preg_match('/^how\s+are\s+you[!.?\s]*$/u', $q);
+    if (preg_match('/^how\s+are\s+(you|u)(?:\s+doing)?[!.?\s]*$/u', $q)) {
+        return true;
+    }
+    return false;
 }
 
 function policy_current_datetime(): string
@@ -311,16 +320,118 @@ function policy_extract_claude_text(array $data): ?string
     return trim(implode("\n\n", $parts));
 }
 
-function policy_greeting_answer(): array
+function policy_greeting_kind(string $query): string
 {
+    $q = strtolower(trim($query));
+    if (preg_match('/^how\s+are\s+(you|u)(?:\s+doing)?[!.?\s]*$/u', $q)) {
+        return 'how_are_you';
+    }
+    if (preg_match('/^how\s+(is|are)\s+(the|your)/u', $q)) {
+        return 'question';
+    }
+    if (preg_match('/^(thanks|thank\s+you|thx)[!.?\s]*$/u', $q)) {
+        return 'thanks';
+    }
+    if (preg_match('/^good\s+(morning|afternoon|evening)[!.?\s]*$/u', $q)) {
+        return 'time_of_day';
+    }
+    return 'hello';
+}
+
+function policy_greeting_answer(string $query): array
+{
+    $kind = policy_greeting_kind($query);
+
+    switch ($kind) {
+        case 'how_are_you':
+            $answer = "I'm doing well, thank you for asking — ready to help whenever you need me.\n\n"
+                . "What's on your mind? Elections, manifesto, candidates, or something at MUBS?";
+            break;
+        case 'thanks':
+            $answer = "You're welcome. Feel free to ask anything else.";
+            break;
+        case 'time_of_day':
+            $answer = "Good to hear from you. I'm the MUBASA AI Assistant — happy to help with the June elections, manifesto, or staff matters at MUBS.";
+            break;
+        case 'hello':
+        default:
+            $answer = "Hello — good to meet you.\n\n"
+                . "I'm the MUBASA AI Assistant. Ask me about the **June 2026 elections**, **candidates**, **manifesto**, or **your rights at MUBS** — whatever you need.";
+            break;
+    }
+
     return [
-        'answer' => "Welcome — I'm here to help MUBASA members get straight answers.\n\n"
-            . "Ask me about the June 2026 executive elections, nominated candidates, manifesto commitments, "
-            . "or how MUBS policies on promotions, leave, science pay, and welfare apply to you.\n\n"
-            . "What would you like to know?",
+        'answer' => $answer,
         'source' => ASSISTANT_SOURCE,
         'mode' => 'greeting',
     ];
+}
+
+function policy_call_claude_greeting(string $apiKey, string $model, string $question): array
+{
+    $today = policy_current_datetime();
+    $kind = policy_greeting_kind($question);
+
+    $kindGuide = match ($kind) {
+        'how_are_you' => 'They asked how you are. Answer that question naturally first (you are an AI assistant doing well and ready to help). Then one short line inviting their question. Do NOT repeat a long welcome paragraph.',
+        'thanks' => 'They said thanks. Reply briefly and warmly.',
+        'time_of_day' => 'They gave a time-of-day greeting. Mirror it briefly, then one line about being the MUBASA AI Assistant.',
+        default => 'They said hello. Greet them back in one or two short sentences. Mention you help MUBASA members. Do NOT list every topic you cover.',
+    };
+
+    $system = <<<PROMPT
+You are the MUBASA AI Assistant for Makerere University Business School Academic Staff Association members.
+
+CURRENT DATE AND TIME: {$today}
+
+This is casual small talk — NOT a substantive question.
+
+{$kindGuide}
+
+Rules:
+- Reply in 1–3 short sentences only (4 max for "how are you").
+- Sound human and warm, not like a brochure.
+- Do NOT paste the same welcome block every time. Vary your wording.
+- Do NOT use bullet lists for greetings.
+- Do NOT mention searching the web or your knowledge base.
+- Use **bold** sparingly if at all. No emoji unless it feels natural (prefer none).
+- You may briefly note it is June 2026 and MUBASA executive elections are underway — only if it fits naturally, one clause max.
+PROMPT;
+
+    $payload = json_encode([
+        'model' => $model,
+        'max_tokens' => 220,
+        'system' => $system,
+        'messages' => [
+            ['role' => 'user', 'content' => 'Member message: ' . $question],
+        ],
+    ]);
+
+    $ch = curl_init('https://api.anthropic.com/v1/messages');
+    curl_setopt_array($ch, [
+        CURLOPT_POST => true,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => 30,
+        CURLOPT_HTTPHEADER => [
+            'Content-Type: application/json',
+            'x-api-key: ' . $apiKey,
+            'anthropic-version: 2023-06-01',
+        ],
+        CURLOPT_POSTFIELDS => $payload,
+    ]);
+
+    $response = curl_exec($ch);
+    $status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if ($response === false || $status < 200 || $status >= 300) {
+        return ['text' => null, 'error' => 'API status ' . $status];
+    }
+
+    $data = json_decode($response, true);
+    $text = policy_extract_claude_text($data);
+
+    return ['text' => is_string($text) && trim($text) !== '' ? trim($text) : null, 'error' => null];
 }
 
 function policy_rank_chunks(array $chunks, array $tokens, int $limit = 5): array
@@ -534,21 +645,21 @@ if (policy_is_greeting($query)) {
     $model = trim($config['anthropic_model'] ?? 'claude-3-5-haiku-latest');
 
     if ($apiKey !== '') {
-        $claude = policy_call_claude($apiKey, $model, $coreContext, '', '', $query, true, false);
+        $claude = policy_call_claude_greeting($apiKey, $model, $query);
         if ($claude['text'] !== null) {
             echo json_encode([
                 'ok' => true,
                 'answer' => $claude['text'],
                 'source' => ASSISTANT_SOURCE,
                 'ai' => true,
-                'mode' => 'ai',
+                'mode' => 'greeting',
                 'suggestions' => $suggestions,
             ]);
             exit;
         }
     }
 
-    $greeting = policy_greeting_answer();
+    $greeting = policy_greeting_answer($query);
     echo json_encode([
         'ok' => true,
         'answer' => $greeting['answer'],

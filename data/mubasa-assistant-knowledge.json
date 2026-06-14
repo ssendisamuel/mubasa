@@ -100,6 +100,11 @@
     { "position": "Representative — Mbarara", "name": "Mr. Beinomugisha Anthony" }
   ],
   "returningOfficer": "Sebi Hussen, Returning Officer — MUBASA",
+  "mubsLeadership": {
+    "principal": "Prof. Moses Muhwezi",
+    "predecessor": "Prof. Wasswa Balunywa",
+    "note": "Prof. Moses Muhwezi is the Principal of Makerere University Business School (MUBS). He succeeded Prof. Wasswa Balunywa and is the second person to hold the Principal role in MUBS history."
+  },
   "suggestedQuestions": [
     "When are the MUBASA elections in June 2026?",
     "Who is running for Deputy Chairperson?",

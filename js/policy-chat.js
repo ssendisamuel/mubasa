@@ -1,11 +1,29 @@
 (function () {
   const ASSISTANT_SOURCE = "AI Model Developed and Trained by Ssendi";
 
-  const WIDGET_INTRO =
-    "Welcome — I'm here to help MUBASA members get straight answers.\n\n" +
-    "Ask me about the June 2026 executive elections, nominated candidates, manifesto commitments, " +
-    "or how MUBS policies on promotions, leave, science pay, and welfare apply to you.\n\n" +
-    "What would you like to know?";
+  function greetingReply(text) {
+    const q = String(text).trim().toLowerCase();
+    if (/^how\s+are\s+(you|u)(?:\s+doing)?[!.?\s]*$/i.test(q)) {
+      return (
+        "I'm doing well, thank you for asking — ready to help whenever you need me.\n\n" +
+        "What's on your mind? Elections, manifesto, candidates, or something at MUBS?"
+      );
+    }
+    if (/^(thanks|thank\s+you|thx)[!.?\s]*$/i.test(q)) {
+      return "You're welcome. Feel free to ask anything else.";
+    }
+    if (/^good\s+(morning|afternoon|evening)[!.?\s]*$/i.test(q)) {
+      return (
+        "Good to hear from you. I'm the MUBASA AI Assistant — happy to help with the June elections, " +
+        "manifesto, or staff matters at MUBS."
+      );
+    }
+    return (
+      "Hello — good to meet you.\n\n" +
+      "I'm the MUBASA AI Assistant. Ask me about the **June 2026 elections**, **candidates**, " +
+      "**manifesto**, or **your rights at MUBS** — whatever you need."
+    );
+  }
 
   const defaultSuggestions = [
     "When are the MUBASA elections in June 2026?",
@@ -195,7 +213,7 @@
 
     function bootWidgetChat() {
       if (messages.childElementCount === 0) {
-        addMessage(WIDGET_INTRO, "bot", ASSISTANT_SOURCE);
+        addMessage(greetingReply("hello"), "bot", ASSISTANT_SOURCE);
         renderSuggestions(defaultSuggestions);
       }
     }
@@ -250,10 +268,13 @@
 
     function isGreeting(text) {
       const q = String(text).trim().toLowerCase();
+      if (/\b(today|principal|dean|election|candidate|manifesto|who|what|when|where|why|tell|about|current|news|mubs|mubasa)\b/i.test(q)) {
+        return false;
+      }
       if (/^(hi|hello|hey|good\s+(morning|afternoon|evening)|greetings|howdy|thanks|thank\s+you|ok|okay)[!.?\s]*$/i.test(q)) {
         return true;
       }
-      return /^how\s+are\s+you[!.?\s]*$/i.test(q);
+      return /^how\s+are\s+(you|u)(?:\s+doing)?[!.?\s]*$/i.test(q);
     }
 
     async function loadPolicies() {
@@ -277,7 +298,7 @@
     async function answerLocally(query) {
       if (isGreeting(query)) {
         return {
-          answer: WIDGET_INTRO,
+          answer: greetingReply(query),
           source: ASSISTANT_SOURCE,
         };
       }
