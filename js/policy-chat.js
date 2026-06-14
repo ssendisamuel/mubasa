@@ -28,6 +28,7 @@
   const defaultSuggestions = [
     "When are the MUBASA elections in June 2026?",
     "Who is running for Deputy Chairperson?",
+    "Why vote Arinda and Ssendi as a team?",
     "What are the four manifesto pillars?",
     "What does the HR Manual say about promotions?",
   ];

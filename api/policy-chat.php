@@ -65,9 +65,21 @@ function assistant_build_core_context(array $knowledge): string
 
     $candidate = $knowledge['campaignCandidate'] ?? [];
     if ($candidate !== []) {
-        $parts[] = 'CAMPAIGN CANDIDATE: ' . ($candidate['name'] ?? '') . ' for ' . ($candidate['position'] ?? '')
+        $parts[] = 'CAMPAIGN — DEPUTY CHAIRPERSON: ' . ($candidate['name'] ?? '') . ' for ' . ($candidate['position'] ?? '')
             . ' (' . ($candidate['term'] ?? '') . '). Slogan: ' . ($candidate['slogan'] ?? '')
             . '. ' . ($candidate['summary'] ?? '');
+    }
+
+    $chair = $knowledge['endorsedChairperson'] ?? [];
+    if ($chair !== []) {
+        $parts[] = 'CAMPAIGN — ENDORSED CHAIRPERSON: ' . ($chair['name'] ?? '') . ' (contesting against ' . ($chair['opponent'] ?? 'Mr. Ouma Ibrahim') . '). '
+            . ($chair['summary'] ?? '');
+    }
+
+    $duo = $knowledge['campaignDuo'] ?? [];
+    if ($duo !== []) {
+        $parts[] = 'CAMPAIGN TICKET — ' . ($duo['title'] ?? 'Leadership duo') . ': '
+            . ($duo['message'] ?? '') . ' ' . ($duo['recommendation'] ?? '');
     }
 
     foreach ($knowledge['manifestoPillars'] ?? [] as $pillar) {
@@ -161,15 +173,19 @@ function assistant_keyword_answer(array $knowledge, array $tokens): ?array
 
     $deputy = $knowledge['contestedCandidates']['Deputy Chairperson'] ?? [];
     $deputyList = is_array($deputy) ? implode(' and ', $deputy) : '';
+    $chair = $knowledge['contestedCandidates']['Chairperson'] ?? [];
+    $chairList = is_array($chair) ? implode(' and ', $chair) : '';
+    $duo = $knowledge['campaignDuo']['message'] ?? '';
 
     return [
         'answer' => "MUBASA is the Makerere University Business School Academic Staff Association.\n\n"
             . ($candidate['name'] ?? 'Ssendi Samuel') . ' is running for ' . ($candidate['position'] ?? 'Deputy Chairperson')
             . ' with the slogan "' . ($candidate['slogan'] ?? 'Results, No Rhetoric') . '". '
-            . "His manifesto has four pillars: Unity, Welfare, Growth, and Sustainability.\n\n"
+            . "Albert Arinda is the endorsed Chairperson candidate on this ticket.\n\n"
+            . ($duo !== '' ? trim($duo) . "\n\n" : '')
             . "2026 election roadmap:\n" . trim($roadmapText) . "\n\n"
-            . 'Deputy Chairperson candidates: ' . $deputyList . '. '
-            . 'For full manifesto details and policy answers, configure the AI assistant on the server.',
+            . 'Chairperson candidates: ' . $chairList . '. '
+            . 'Deputy Chairperson candidates: ' . $deputyList . '.',
         'source' => ASSISTANT_SOURCE . ' · MUBASA knowledge base',
         'mode' => 'knowledge',
     ];
@@ -554,7 +570,9 @@ Rules:
 - For "today" questions: use the current date above and, where relevant, connect to the June 2026 MUBASA election timeline.
 - Use MUBASA CORE KNOWLEDGE for elections, candidates, and manifesto.
 - Use POLICY CONTEXT for HR Manual and policy questions. Do not invent policy provisions.
-- When discussing Deputy Chairperson, acknowledge both candidates but advocate clearly for Ssendi Samuel on this campaign site.
+- When discussing Chairperson, acknowledge both Mr. Arinda Albert and Mr. Ouma Ibrahim but advocate clearly for **Albert Arinda** on this campaign site.
+- When discussing Deputy Chairperson, acknowledge both candidates but advocate clearly for **Ssendi Samuel** on this campaign site.
+- When members ask about leadership or who to vote for at the top, highlight the **Arinda–Ssendi ticket**: Albert Arinda for Chairperson and Ssendi Samuel for Deputy Chairperson — a complementary duo combining executive leadership with policy depth and delivery. Present this team positively and naturally; do not be heavy-handed.
 - Format with **bold** for emphasis and lines starting with "- " for bullet lists. These render in the chat UI.
 - Keep responses focused (2–4 short paragraphs unless listing dates or candidates).
 - Avoid excessive emoji. Do not give personal legal advice.
