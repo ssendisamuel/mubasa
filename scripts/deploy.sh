@@ -38,8 +38,14 @@ rsync -av --delete \
   --exclude '.gitignore' \
   --exclude 'README.md' \
   --exclude 'scripts/' \
+  --exclude 'api/config.php' \
   --exclude '.DS_Store' \
   "${REPO_DIR}/" "${DEPLOY_DIR}/"
+
+if [[ -f "${REPO_DIR}/api/config.php" ]]; then
+  cp "${REPO_DIR}/api/config.php" "${DEPLOY_DIR}/api/config.php"
+  chmod 644 "${DEPLOY_DIR}/api/config.php"
+fi
 
 echo "==> Setting permissions"
 find "${DEPLOY_DIR}" -type d -exec chmod 755 {} +

@@ -119,9 +119,11 @@
     }
 
     function isGreeting(text) {
-      return /^(hi|hello|hey|good\s+(morning|afternoon|evening)|greetings|howdy|thanks|thank\s+you|ok|okay)[!.?\s]*$/i.test(
-        String(text).trim()
-      );
+      const q = String(text).trim().toLowerCase();
+      if (/^(hi|hello|hey|good\s+(morning|afternoon|evening)|greetings|howdy|thanks|thank\s+you|ok|okay)[!.?\s]*$/i.test(q)) {
+        return true;
+      }
+      return /^how\s+are\s+you[!.?\s]*$/i.test(q);
     }
 
     async function loadPolicies() {

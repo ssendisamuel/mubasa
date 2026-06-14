@@ -50,7 +50,7 @@ function policy_tokens(string $text): array
 {
     $text = strtolower(preg_replace('/[^a-z0-9\s]/', ' ', $text));
     $parts = preg_split('/\s+/', $text, -1, PREG_SPLIT_NO_EMPTY);
-    $stop = ['the', 'and', 'for', 'what', 'how', 'does', 'about', 'with', 'from', 'that', 'this', 'are', 'can', 'you', 'mubs', 'tell', 'explain', 'hello', 'hi', 'hey'];
+    $stop = ['the', 'and', 'for', 'what', 'how', 'does', 'about', 'with', 'from', 'that', 'this', 'are', 'can', 'you', 'mubs', 'tell', 'explain', 'hello', 'hi', 'hey', 'your'];
     return array_values(array_filter($parts, fn($w) => strlen($w) > 2 && !in_array($w, $stop, true)));
 }
 
@@ -82,7 +82,10 @@ function policy_score(string $haystack, array $keywords, array $tokens): float
 function policy_is_greeting(string $query): bool
 {
     $q = strtolower(trim($query));
-    return (bool) preg_match('/^(hi|hello|hey|good\s+(morning|afternoon|evening)|greetings|howdy|thanks|thank\s+you|ok|okay)[!.?\s]*$/u', $q);
+    if (preg_match('/^(hi|hello|hey|good\s+(morning|afternoon|evening)|greetings|howdy|thanks|thank\s+you|ok|okay)[!.?\s]*$/u', $q)) {
+        return true;
+    }
+    return (bool) preg_match('/^how\s+are\s+you[!.?\s]*$/u', $q);
 }
 
 function policy_greeting_answer(): array
