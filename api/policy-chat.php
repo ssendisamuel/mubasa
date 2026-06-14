@@ -121,8 +121,35 @@ function assistant_build_core_context(array $knowledge): string
 
     $leadership = $knowledge['mubsLeadership'] ?? [];
     if ($leadership !== []) {
-        $parts[] = 'MUBS LEADERSHIP: Principal — ' . ($leadership['principal'] ?? '')
-            . '. ' . ($leadership['note'] ?? '');
+        $leadershipText = 'MUBS LEADERSHIP: Principal — ' . ($leadership['principal'] ?? '');
+        if (!empty($leadership['actingDeputyPrincipal'])) {
+            $leadershipText .= '. Acting Deputy Principal — ' . $leadership['actingDeputyPrincipal'];
+        }
+        $leadershipText .= '. ' . ($leadership['note'] ?? '');
+        $parts[] = $leadershipText;
+    }
+
+    $plan = $knowledge['strategicPlan2025_2030'] ?? [];
+    if ($plan !== []) {
+        $planLines = [
+            'MUBS STRATEGIC PLAN 2025–2030: ' . ($plan['title'] ?? ''),
+            'Theme: ' . ($plan['theme'] ?? ''),
+            'Launched: ' . ($plan['launched'] ?? ''),
+            ($plan['mottoAlignment'] ?? ''),
+            'Principal emphasis: ' . ($plan['principalEmphasis'] ?? ''),
+            'Six strategic pillars:',
+        ];
+        foreach ($plan['pillars'] ?? [] as $pillar) {
+            $line = ($pillar['number'] ?? '') . '. ' . ($pillar['name'] ?? '');
+            if (!empty($pillar['highlights'])) {
+                $line .= ' — ' . implode('; ', (array) $pillar['highlights']);
+            }
+            if (!empty($pillar['mubasaLink'])) {
+                $line .= ' [MUBASA link: ' . $pillar['mubasaLink'] . ']';
+            }
+            $planLines[] = $line;
+        }
+        $parts[] = implode("\n", $planLines);
     }
 
     return implode("\n\n", $parts);
@@ -561,14 +588,14 @@ You are the MUBASA AI Assistant on Ssendi Samuel's campaign website. He is runni
 
 CURRENT DATE AND TIME: {$today}
 
-You have built-in knowledge about MUBASA, MUBS, members, the June 2026 executive election roadmap, nominated candidates, and Ssendi Samuel's manifesto (Unity, Welfare, Growth, Sustainability).
+You have built-in knowledge about MUBASA, MUBS, members, the June 2026 executive election roadmap, nominated candidates, Ssendi Samuel's manifesto (Unity, Welfare, Growth, Sustainability), and the full MUBS Strategic Plan 2025–2030 (six pillars, launch details, and Human Capital commitments).
 
 Rules:
 - Be conversational, warm, and genuinely helpful to MUBASA members.
 - Answer directly and intelligently. Never tell the user to "check the website" or that you lack information when you can look it up or infer an answer.
 - For current facts (MUBS leadership, today's date, news, contacts, people, roles), use web search proactively. Do not mention searching the web or your knowledge base — just answer naturally.
 - For "today" questions: use the current date above and, where relevant, connect to the June 2026 MUBASA election timeline.
-- Use MUBASA CORE KNOWLEDGE for elections, candidates, and manifesto.
+- Use MUBASA CORE KNOWLEDGE for elections, candidates, manifesto, and the MUBS Strategic Plan 2025–2030 (all six pillars). Connect Human Capital and Sustainability pillars to MUBASA manifesto commitments when relevant.
 - Use POLICY CONTEXT for HR Manual and policy questions. Do not invent policy provisions.
 - When discussing Chairperson, acknowledge both Mr. Arinda Albert and Mr. Ouma Ibrahim but advocate clearly for **Albert Arinda** on this campaign site.
 - When discussing Deputy Chairperson, acknowledge both candidates but advocate clearly for **Ssendi Samuel** on this campaign site.

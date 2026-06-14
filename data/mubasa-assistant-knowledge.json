@@ -114,7 +114,83 @@
   "mubsLeadership": {
     "principal": "Prof. Moses Muhwezi",
     "predecessor": "Prof. Wasswa Balunywa",
-    "note": "Prof. Moses Muhwezi is the Principal of Makerere University Business School (MUBS). He succeeded Prof. Wasswa Balunywa and is the second person to hold the Principal role in MUBS history."
+    "actingDeputyPrincipal": "Prof. Rachel Mindra Katoroogo",
+    "note": "Prof. Moses Muhwezi is the Principal of Makerere University Business School (MUBS). He succeeded Prof. Wasswa Balunywa and is the second person to hold the Principal role in MUBS history. Prof. Rachel Mindra Katoroogo serves as Acting Deputy Principal — the first woman to hold this position at MUBS."
+  },
+  "strategicPlan2025_2030": {
+    "title": "MUBS Strategic Plan 2025–2030",
+    "theme": "Transforming into a Global Innovative Institution for Business and Management Education, Research and Training.",
+    "launched": "4 March 2026 at the MUBS Digital Library. Keynote address by Principal Prof. Moses Muhwezi.",
+    "mottoAlignment": "Aligns with the MUBS motto \"Enabling the Future.\"",
+    "principalEmphasis": "Prof. Muhwezi highlighted fostering a culture of innovation and entrepreneurial thinking, strengthening industry partnerships for practical learning, academic excellence, and producing graduates equipped for the modern workplace.",
+    "pillars": [
+      {
+        "number": 1,
+        "name": "Teaching, Learning and Student Success",
+        "highlights": [
+          "Annual 10% programme review",
+          "Introduction of full online academic programmes",
+          "Enhanced learning facilities",
+          "Integration of degree and vocational skills",
+          "Strengthened academic support to improve pass rates"
+        ]
+      },
+      {
+        "number": 2,
+        "name": "Infrastructure and Digital Transformation",
+        "highlights": [
+          "Construction of an on-campus training hotel",
+          "Upgraded campus internet",
+          "Digitised reporting systems",
+          "Rehabilitation of facilities",
+          "Expansion through regional campuses"
+        ]
+      },
+      {
+        "number": 3,
+        "name": "Research, Innovation and Community Engagement",
+        "highlights": [
+          "Support to national programmes including PDM, Tenfold, and ATMS",
+          "Establishment of Centres of Excellence",
+          "Strengthened research and innovation hubs",
+          "ISO certification",
+          "Emerging Leaders Programme"
+        ]
+      },
+      {
+        "number": 4,
+        "name": "Equity and Social Safeguards",
+        "highlights": [
+          "Institutionalised CSR initiatives including the Luzira inmates programme",
+          "Civic awareness campaigns",
+          "Male engagement strategy",
+          "Increased access for persons with disabilities and disadvantaged groups",
+          "Enhanced environmental protection"
+        ]
+      },
+      {
+        "number": 5,
+        "name": "Human Capital and Sustainability",
+        "highlights": [
+          "Strategic staff development and succession planning",
+          "Establishment of a commercial arm of MUBS",
+          "Strengthened governance systems",
+          "Resource mobilisation through alumni engagement and an endowment fund"
+        ],
+        "mubasaLink": "Central to MUBASA manifesto Pillars 03 (Growth) and 04 (Sustainability). MUBASA should monitor and support management delivery of staff development commitments."
+      },
+      {
+        "number": 6,
+        "name": "Partnerships and Internationalisation",
+        "highlights": [
+          "Establishment of an International Office",
+          "Stronger academia-industry collaboration",
+          "Mentorship and knowledge transfer partnerships",
+          "Implementation of the MUBS marketing and branding strategy"
+        ]
+      }
+    ],
+    "sources": "MUBS launch communications, MUBS News, Independent magazine, UG Standard"
   },
   "suggestedQuestions": [
     "When are the MUBASA elections in June 2026?",
@@ -122,6 +198,7 @@
     "Why vote Arinda and Ssendi as a team?",
     "What are the four manifesto pillars?",
     "What does the HR Manual say about promotions?",
+    "What are the six pillars of the MUBS Strategic Plan 2025–2030?",
     "What is science pay and why does it matter at MUBS?"
   ]
 }
