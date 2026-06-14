@@ -12,5 +12,5 @@ return [
 
     // Policy Assistant — add on server only (never commit config.php)
     'anthropic_api_key' => 'YOUR_ANTHROPIC_API_KEY',
-    'anthropic_model' => 'claude-haiku-4-5-20251001',
+    'anthropic_model' => 'claude-3-5-haiku-latest',
 ];

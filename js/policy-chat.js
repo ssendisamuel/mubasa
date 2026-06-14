@@ -101,16 +101,27 @@
         .filter((word) => word.length > 2 && !stop.has(word));
     }
 
+    function wordMatch(haystack, term) {
+      const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      return new RegExp(`\\b${escaped}\\b`, "i").test(haystack);
+    }
+
     function scoreText(text, keywords, tokens) {
       const haystack = String(text).toLowerCase();
       let score = 0;
       tokens.forEach((token) => {
-        if (haystack.includes(token)) score += 2;
+        if (wordMatch(haystack, token)) score += 2;
       });
       (keywords || []).forEach((keyword) => {
-        if (haystack.includes(String(keyword).toLowerCase())) score += 4;
+        if (wordMatch(haystack, String(keyword).toLowerCase())) score += 4;
       });
       return score;
+    }
+
+    function isGreeting(text) {
+      return /^(hi|hello|hey|good\s+(morning|afternoon|evening)|greetings|howdy|thanks|thank\s+you|ok|okay)[!.?\s]*$/i.test(
+        String(text).trim()
+      );
     }
 
     async function loadPolicies() {
@@ -121,6 +132,14 @@
     }
 
     async function answerLocally(query) {
+      if (isGreeting(query)) {
+        return {
+          answer:
+            "Hello! I am the MUBASA Policy Assistant. Ask me about promotions, leave, grievances, science pay, the Strategic Plan, or FASPU agreements.",
+          source: "Policy Assistant · offline mode",
+        };
+      }
+
       const policies = await loadPolicies();
       const tokens = tokenize(query);
       let best = null;
@@ -192,7 +211,10 @@
         if (response.ok) {
           const result = await response.json();
           if (result.ok) {
-            addMessage(result.answer, "bot", result.source);
+            const source = result.ai
+              ? result.source || "Policy Assistant · Claude AI"
+              : result.source || "Policy Assistant · document search";
+            addMessage(result.answer, "bot", source);
             renderSuggestions(result.suggestions || defaultSuggestions);
             submitBtn.disabled = false;
             return;

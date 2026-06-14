@@ -50,26 +50,48 @@ function policy_tokens(string $text): array
 {
     $text = strtolower(preg_replace('/[^a-z0-9\s]/', ' ', $text));
     $parts = preg_split('/\s+/', $text, -1, PREG_SPLIT_NO_EMPTY);
-    $stop = ['the', 'and', 'for', 'what', 'how', 'does', 'about', 'with', 'from', 'that', 'this', 'are', 'can', 'you', 'mubs', 'tell', 'explain'];
+    $stop = ['the', 'and', 'for', 'what', 'how', 'does', 'about', 'with', 'from', 'that', 'this', 'are', 'can', 'you', 'mubs', 'tell', 'explain', 'hello', 'hi', 'hey'];
     return array_values(array_filter($parts, fn($w) => strlen($w) > 2 && !in_array($w, $stop, true)));
+}
+
+function policy_word_match(string $haystack, string $term): bool
+{
+    $term = strtolower(trim($term));
+    if ($term === '') {
+        return false;
+    }
+    return (bool) preg_match('/\b' . preg_quote($term, '/') . '\b/i', $haystack);
 }
 
 function policy_score(string $haystack, array $keywords, array $tokens): float
 {
-    $haystack = strtolower($haystack);
     $score = 0.0;
     foreach ($tokens as $token) {
-        if (str_contains($haystack, $token)) {
+        if (policy_word_match($haystack, $token)) {
             $score += 2.0;
         }
     }
     foreach ($keywords as $keyword) {
-        $keyword = strtolower($keyword);
-        if ($keyword !== '' && str_contains($haystack, $keyword)) {
+        if (policy_word_match($haystack, $keyword)) {
             $score += 4.0;
         }
     }
     return $score;
+}
+
+function policy_is_greeting(string $query): bool
+{
+    $q = strtolower(trim($query));
+    return (bool) preg_match('/^(hi|hello|hey|good\s+(morning|afternoon|evening)|greetings|howdy|thanks|thank\s+you|ok|okay)[!.?\s]*$/u', $q);
+}
+
+function policy_greeting_answer(): array
+{
+    return [
+        'answer' => "Hello! I am the MUBASA Policy Assistant. I can help you understand the MUBS HR Manual, Strategic Plan, FASPU collective agreements, Public Service Standing Orders, and how they connect to Ssendi Samuel's manifesto.\n\nTry asking about promotions, leave, grievances, science pay, or staff welfare.",
+        'source' => 'Policy Assistant',
+        'mode' => 'greeting',
+    ];
 }
 
 function policy_rank_chunks(array $chunks, array $tokens, int $limit = 5): array
@@ -111,13 +133,9 @@ function policy_build_context(array $policies, array $topChunks, ?array $bestPol
     $parts = [];
 
     if ($bestPolicy) {
-        $parts[] = 'POLICY SUMMARY: ' . ($bestPolicy['title'] ?? '');
+        $parts[] = 'PRIMARY POLICY: ' . ($bestPolicy['title'] ?? '');
         $parts[] = $bestPolicy['summary'] ?? '';
         $parts[] = 'Manifesto alignment: ' . ($bestPolicy['manifestoAlignment'] ?? '');
-    }
-
-    foreach ($policies as $policy) {
-        $parts[] = 'DOCUMENT: ' . ($policy['title'] ?? '') . ' — ' . ($policy['summary'] ?? '');
     }
 
     foreach ($topChunks as $chunk) {
@@ -131,31 +149,31 @@ function policy_build_context(array $policies, array $topChunks, ?array $bestPol
     return implode("\n\n", $parts);
 }
 
-function policy_keyword_answer(array $policies, array $chunks, array $tokens, array $suggestions): array
+function policy_keyword_answer(array $policies, array $chunks, array $tokens): array
 {
     $bestPolicy = policy_best_policy($policies, $tokens);
     $topChunks = policy_rank_chunks($chunks, $tokens, 1);
     $bestChunk = $topChunks[0] ?? null;
+    $bestChunkScore = $bestChunk ? policy_score($bestChunk['text'] ?? '', [], $tokens) : 0.0;
 
-    $bestPolicyScore = $bestPolicy ? 2 : 0;
-    $bestChunkScore = 0;
-    if ($bestChunk) {
-        $bestChunkScore = policy_score($bestChunk['text'] ?? '', [], $tokens);
-    }
-
-    if ($bestPolicyScore < 2 && $bestChunkScore < 2) {
+    if (!$bestPolicy && $bestChunkScore < 2) {
         return [
-            'answer' => "I could not find a precise match for that question in the policy knowledge base. Try asking about promotions, leave, grievances, salary harmonisation, science pay, the Strategic Plan Human Capital pillar, or FASPU collective agreements. You can also browse the Policy Hub section on this page.",
-            'source' => 'Policy Assistant',
+            'answer' => "I could not find a precise match in the policy documents. Try a specific question about promotions, leave, grievances, salary harmonisation, science pay, the Strategic Plan, or FASPU agreements.",
+            'source' => 'Policy Assistant · document search',
+            'mode' => 'search',
         ];
     }
 
-    if ($bestPolicy && $bestPolicyScore >= $bestChunkScore) {
+    if ($bestPolicy && (!$bestChunk || policy_score(implode(' ', [
+        $bestPolicy['title'] ?? '',
+        $bestPolicy['summary'] ?? '',
+    ]), $bestPolicy['keywords'] ?? [], $tokens) >= $bestChunkScore)) {
         $topics = array_slice($bestPolicy['keyTopics'] ?? [], 0, 4);
         $topicList = $topics ? "\n\nKey areas: " . implode(' · ', $topics) : '';
         return [
             'answer' => ($bestPolicy['summary'] ?? '') . $topicList . "\n\nManifesto alignment: " . ($bestPolicy['manifestoAlignment'] ?? ''),
-            'source' => $bestPolicy['title'] ?? 'Policy document',
+            'source' => ($bestPolicy['title'] ?? 'Policy document') . ' · document search',
+            'mode' => 'search',
         ];
     }
 
@@ -165,30 +183,35 @@ function policy_keyword_answer(array $policies, array $chunks, array $tokens, ar
     }
 
     return [
-        'answer' => $excerpt . "\n\nThis excerpt is from the MUBS HR Manual (2024). For the full provision, download the HR Manual from the Policy Hub.",
-        'source' => ($bestChunk['source'] ?? 'MUBS HR Manual 2024') . ' · p.' . ($bestChunk['page'] ?? '?'),
+        'answer' => $excerpt . "\n\nThis excerpt is from the MUBS HR Manual (2024). Download the full manual from the Policy Hub for complete details.",
+        'source' => 'MUBS HR Manual 2024 · p.' . ($bestChunk['page'] ?? '?') . ' · document search',
+        'mode' => 'search',
     ];
 }
 
-function policy_call_claude(string $apiKey, string $model, string $context, string $question): ?string
+function policy_call_claude(string $apiKey, string $model, string $context, string $question, bool $isGreeting = false): array
 {
     $system = <<<PROMPT
 You are the MUBASA Policy Assistant on Ssendi Samuel's campaign website for Deputy Chairperson of the Makerere University Business School Academic Staff Association (MUBASA).
 
 Rules:
-- Answer ONLY using the policy context provided below. Do not invent policies or legal provisions.
-- Be clear, professional, and concise (2–4 short paragraphs max).
+- Be conversational, warm, and professional.
+- For greetings or small talk, reply briefly and invite a policy question. Do NOT dump long policy text for a simple hello.
+- For policy questions, answer ONLY using the policy context provided. Do not invent provisions.
+- Be concise (2–4 short paragraphs max).
 - Cite the source document and HR Manual page number when relevant.
-- When helpful, briefly explain how the answer connects to Ssendi Samuel's manifesto pillars (Unity, Welfare, Growth, Sustainability).
-- If the context does not contain enough information, say so honestly and suggest what the member should consult or ask MUBASA about.
-- Do not provide personal legal advice or case-specific judgments.
+- When helpful, link the answer to manifesto pillars: Unity, Welfare, Growth, Sustainability.
+- If context is insufficient, say so and suggest what to consult.
+- Do not give personal legal advice.
 PROMPT;
 
-    $userContent = "POLICY CONTEXT:\n\n" . $context . "\n\nMEMBER QUESTION:\n" . $question;
+    $userContent = $isGreeting
+        ? "The member said: " . $question . "\n\nRespond with a friendly greeting and invite them to ask about MUBS policies."
+        : "POLICY CONTEXT:\n\n" . $context . "\n\nMEMBER QUESTION:\n" . $question;
 
     $payload = json_encode([
         'model' => $model,
-        'max_tokens' => 900,
+        'max_tokens' => 700,
         'system' => $system,
         'messages' => [
             ['role' => 'user', 'content' => $userContent],
@@ -209,16 +232,60 @@ PROMPT;
     ]);
 
     $response = curl_exec($ch);
-    $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
 
     if ($response === false || $status < 200 || $status >= 300) {
-        return null;
+        return ['text' => null, 'error' => 'API status ' . $status];
     }
 
     $data = json_decode($response, true);
     $text = $data['content'][0]['text'] ?? null;
-    return is_string($text) && trim($text) !== '' ? trim($text) : null;
+    if (!is_string($text) || trim($text) === '') {
+        return ['text' => null, 'error' => 'Empty response'];
+    }
+
+    return ['text' => trim($text), 'error' => null];
+}
+
+function policy_resolve_api_key(array $config): string
+{
+    $key = trim($config['anthropic_api_key'] ?? '');
+    if ($key === '' || str_contains($key, 'YOUR_')) {
+        return '';
+    }
+    return $key;
+}
+
+if (policy_is_greeting($query)) {
+    $apiKey = policy_resolve_api_key($config);
+    $model = trim($config['anthropic_model'] ?? 'claude-3-5-haiku-latest');
+
+    if ($apiKey !== '') {
+        $claude = policy_call_claude($apiKey, $model, '', $query, true);
+        if ($claude['text'] !== null) {
+            echo json_encode([
+                'ok' => true,
+                'answer' => $claude['text'],
+                'source' => 'Policy Assistant · Claude AI',
+                'ai' => true,
+                'mode' => 'ai',
+                'suggestions' => $suggestions,
+            ]);
+            exit;
+        }
+    }
+
+    $greeting = policy_greeting_answer();
+    echo json_encode([
+        'ok' => true,
+        'answer' => $greeting['answer'],
+        'source' => $apiKey === '' ? 'Policy Assistant · add API key for Claude AI' : 'Policy Assistant',
+        'ai' => false,
+        'mode' => 'greeting',
+        'suggestions' => $suggestions,
+    ]);
+    exit;
 }
 
 $tokens = policy_tokens($query);
@@ -226,28 +293,38 @@ $topChunks = policy_rank_chunks($chunks, $tokens, 5);
 $bestPolicy = policy_best_policy($policies, $tokens);
 $context = policy_build_context($policies, $topChunks, $bestPolicy);
 
-$apiKey = trim($config['anthropic_api_key'] ?? '');
-$model = trim($config['anthropic_model'] ?? 'claude-haiku-4-5-20251001');
+$apiKey = policy_resolve_api_key($config);
+$models = array_values(array_unique(array_filter([
+    trim($config['anthropic_model'] ?? ''),
+    'claude-3-5-haiku-latest',
+    'claude-haiku-4-5-20251001',
+])));
 
 if ($apiKey !== '') {
-    $aiAnswer = policy_call_claude($apiKey, $model, $context, $query);
-    if ($aiAnswer !== null) {
-        echo json_encode([
-            'ok' => true,
-            'answer' => $aiAnswer,
-            'source' => 'Policy Assistant · Claude + MUBS documents',
-            'ai' => true,
-            'suggestions' => $suggestions,
-        ]);
-        exit;
+    foreach ($models as $model) {
+        $claude = policy_call_claude($apiKey, $model, $context, $query, false);
+        if ($claude['text'] !== null) {
+            echo json_encode([
+                'ok' => true,
+                'answer' => $claude['text'],
+                'source' => 'Policy Assistant · Claude AI',
+                'ai' => true,
+                'mode' => 'ai',
+                'suggestions' => $suggestions,
+            ]);
+            exit;
+        }
     }
 }
 
-$fallback = policy_keyword_answer($policies, $chunks, $tokens, $suggestions);
+$fallback = policy_keyword_answer($policies, $chunks, $tokens);
 echo json_encode([
     'ok' => true,
     'answer' => $fallback['answer'],
-    'source' => $fallback['source'],
+    'source' => $apiKey === ''
+        ? $fallback['source'] . ' · Claude not configured'
+        : $fallback['source'],
     'ai' => false,
+    'mode' => $fallback['mode'],
     'suggestions' => $suggestions,
 ]);
