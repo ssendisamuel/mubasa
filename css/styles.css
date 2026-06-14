@@ -1525,6 +1525,8 @@ a.contact-card:hover {
     text-align: left;
     line-height: 1.35;
   }
+
+  .policy-chat-widget {
     right: 0;
     bottom: 0;
     left: 0;
